@@ -63,8 +63,16 @@ function Editor() {
   const [canvasElements, setCanvasElements] = useState<CanvasElement[]>([]);
   const [selectedElementId, setSelectedElementId] = useState<number | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
-  const [isResizing, setIsResizing] = useState(false);
-  const [resizingElementId, setResizingElementId] = useState<number | null>(null);
+  const [dragInfo, setDragInfo] = useState<{
+    type: 'move' | 'resize';
+    id: number;
+    startX: number;
+    startY: number;
+    elementStartX: number;
+    elementStartY: number;
+    elementStartWidth: number;
+    elementStartHeight: number;
+  } | null>(null);
 
   const updateElement = useCallback((id: number, updates: Partial<CanvasElement>) => {
     setCanvasElements(prev =>
@@ -120,45 +128,64 @@ function Editor() {
   
   drop(canvasRef);
 
-  const handleResizeStart = (e: React.MouseEvent, id: number) => {
+  const handleDragStart = (e: React.MouseEvent, id: number, type: 'move' | 'resize') => {
     e.stopPropagation();
-    setIsResizing(true);
-    setResizingElementId(id);
+    const element = canvasElements.find(el => el.id === id);
+    if (!element) return;
+
+    setSelectedElementId(id);
+    setDragInfo({
+      type,
+      id,
+      startX: e.clientX,
+      startY: e.clientY,
+      elementStartX: element.x,
+      elementStartY: element.y,
+      elementStartWidth: element.width,
+      elementStartHeight: element.height,
+    });
   };
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-        if (!isResizing || !resizingElementId || !canvasRef.current) return;
-        
-        const element = canvasElements.find(el => el.id === resizingElementId);
-        const canvasBounds = canvasRef.current.getBoundingClientRect();
+      if (!dragInfo) return;
 
-        if (!element) return;
+      const dx = e.clientX - dragInfo.startX;
+      const dy = e.clientY - dragInfo.startY;
 
-        const newWidth = e.clientX - canvasBounds.left - element.x;
-        const newHeight = e.clientY - canvasBounds.top - element.y;
-
-        updateElement(resizingElementId, {
-            width: Math.max(20, newWidth),
-            height: Math.max(20, newHeight)
+      if (dragInfo.type === 'move') {
+        updateElement(dragInfo.id, {
+          x: dragInfo.elementStartX + dx,
+          y: dragInfo.elementStartY + dy,
         });
+      } else if (dragInfo.type === 'resize') {
+        const newWidth = dragInfo.elementStartWidth + dx;
+        const newHeight = dragInfo.elementStartHeight + dy;
+        updateElement(dragInfo.id, {
+          width: Math.max(20, newWidth),
+          height: Math.max(20, newHeight)
+        });
+      }
     };
 
     const handleMouseUp = () => {
-        setIsResizing(false);
-        setResizingElementId(null);
+      setDragInfo(null);
     };
 
-    if (isResizing) {
+    if (dragInfo) {
+      document.body.style.cursor = dragInfo.type === 'move' ? 'grabbing' : 'se-resize';
+      document.body.style.userSelect = 'none';
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
     }
 
     return () => {
-        window.removeEventListener('mousemove', handleMouseMove);
-        window.removeEventListener('mouseup', handleMouseUp);
+      document.body.style.cursor = 'default';
+      document.body.style.userSelect = 'auto';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizing, resizingElementId, canvasElements, updateElement]);
+  }, [dragInfo, updateElement]);
 
   const renderElementContent = (element: CanvasElement) => {
     const { type, properties } = element;
@@ -243,7 +270,8 @@ function Editor() {
                     {canvasElements.map((el) => {
                       const isSelected = selectedElementId === el.id;
                       return (
-                        <div key={el.id} 
+                        <div key={el.id}
+                          onMouseDown={(e) => handleDragStart(e, el.id, 'move')}
                           onClick={(e) => { e.stopPropagation(); setSelectedElementId(el.id)}}
                           style={{ position: 'absolute', top: `${el.y}px`, left: `${el.x}px`, width: `${el.width}px`, height: `${el.height}px` }} 
                           className="cursor-grab"
@@ -256,7 +284,7 @@ function Editor() {
                                 <div className="absolute inset-0 border-2 border-primary pointer-events-none" />
                                 <div
                                     className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary rounded-full cursor-se-resize border-2 border-white pointer-events-auto"
-                                    onMouseDown={(e) => handleResizeStart(e, el.id)}
+                                    onMouseDown={(e) => handleDragStart(e, el.id, 'resize')}
                                 />
                               </>
                           )}
