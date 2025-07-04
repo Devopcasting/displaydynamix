@@ -100,7 +100,7 @@ function Editor() {
     }
   }, []);
 
-  const handleApplyLayout = useCallback((layoutType: 'column' | 'row' | 'grid' | 'main-sidebar') => {
+  const handleApplyLayout = (layoutType: 'column' | 'row' | 'grid' | 'main-sidebar') => {
     if (!canvasRef.current) return;
 
     const canvasWidth = canvasRef.current.offsetWidth;
@@ -192,7 +192,7 @@ function Editor() {
         }
         return newElements;
     });
-  }, []);
+  };
 
   const [{ isOver }, drop] = useDrop(
     () => ({
