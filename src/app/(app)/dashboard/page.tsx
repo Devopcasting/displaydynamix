@@ -73,7 +73,7 @@ function Editor() {
   const [isApplyingLayout, setIsApplyingLayout] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [dragInfo, setDragInfo] = useState<{
-    type: 'move' | 'resize';
+    type: string;
     id: number;
     startX: number;
     startY: number;
@@ -83,11 +83,11 @@ function Editor() {
     elementStartHeight: number;
   } | null>(null);
 
-  const updateElement = (id: number, updates: Partial<CanvasElement>) => {
+  const updateElement = useCallback((id: number, updates: Partial<CanvasElement>) => {
     setCanvasElements(prev =>
       prev.map(el => (el.id === id ? { ...el, ...updates, properties: { ...el.properties, ...(updates.properties || {}) } } : el))
     );
-  };
+  }, []);
   
   const selectedElement = canvasElements.find(el => el.id === selectedElementId) || null;
 
@@ -259,7 +259,7 @@ function Editor() {
   
   drop(canvasRef);
 
-  const handleDragStart = (e: React.MouseEvent, id: number, type: 'move' | 'resize') => {
+  const handleDragStart = (e: React.MouseEvent, id: number, type: string) => {
     e.stopPropagation();
     e.preventDefault();
     const element = canvasElements.find(el => el.id === id);
@@ -283,21 +283,38 @@ function Editor() {
       
       const dx = e.clientX - dragInfo.startX;
       const dy = e.clientY - dragInfo.startY;
+      const minSize = 20;
 
       if (dragInfo.type === 'move') {
         updateElement(dragInfo.id, {
           x: dragInfo.elementStartX + dx,
           y: dragInfo.elementStartY + dy,
         });
-      } else if (dragInfo.type === 'resize') {
-        const newWidth = dragInfo.elementStartWidth + dx;
-        const newHeight = dragInfo.elementStartHeight + dy;
-        updateElement(dragInfo.id, {
-          width: Math.max(20, newWidth),
-          height: Math.max(20, newHeight)
-        });
+      } else if (dragInfo.type.startsWith('resize-')) {
+        let { x, y, width, height } = {
+            x: dragInfo.elementStartX,
+            y: dragInfo.elementStartY,
+            width: dragInfo.elementStartWidth,
+            height: dragInfo.elementStartHeight,
+        };
+        const direction = dragInfo.type.replace('resize-', '');
+
+        if (direction.includes('b')) { height = dragInfo.elementStartHeight + dy; }
+        if (direction.includes('t')) { height = dragInfo.elementStartHeight - dy; y = dragInfo.elementStartY + dy; }
+        if (direction.includes('r')) { width = dragInfo.elementStartWidth + dx; }
+        if (direction.includes('l')) { width = dragInfo.elementStartWidth - dx; x = dragInfo.elementStartX + dx; }
+
+        if (width < minSize) {
+            if (direction.includes('l')) { x = dragInfo.elementStartX + dragInfo.elementStartWidth - minSize; }
+            width = minSize;
+        }
+        if (height < minSize) {
+            if (direction.includes('t')) { y = dragInfo.elementStartY + dragInfo.elementStartHeight - minSize; }
+            height = minSize;
+        }
+        updateElement(dragInfo.id, { x, y, width, height });
       }
-    }, [dragInfo]);
+    }, [dragInfo, updateElement]);
 
     const handleMouseUp = useCallback(() => {
       setDragInfo(null);
@@ -305,7 +322,16 @@ function Editor() {
 
   useEffect(() => {
     if (dragInfo) {
-      document.body.style.cursor = dragInfo.type === 'move' ? 'grabbing' : 'se-resize';
+      let cursor = 'grabbing';
+      if (dragInfo.type.startsWith('resize-')) {
+          const direction = dragInfo.type.replace('resize-', '');
+          const cursorMap: { [key: string]: string } = {
+              t: 'n-resize', b: 's-resize', l: 'w-resize', r: 'e-resize',
+              tl: 'nw-resize', tr: 'ne-resize', bl: 'sw-resize', br: 'se-resize'
+          };
+          cursor = cursorMap[direction] || 'default';
+      }
+      document.body.style.cursor = cursor;
       document.body.style.userSelect = 'none';
       window.addEventListener('mousemove', handleMouseMove);
       window.addEventListener('mouseup', handleMouseUp);
@@ -482,12 +508,42 @@ function Editor() {
                           <div className="w-full h-full border-4 border-dotted border-black">
                             {renderElementContent(el)}
                           </div>
-                          {isSelected && (
+                           {isSelected && (
                               <>
                                 <div className="absolute inset-0 border-2 border-primary pointer-events-none" />
+                                {/* Corner handles */}
                                 <div
-                                    className="absolute -bottom-1 -right-1 w-3 h-3 bg-primary rounded-full cursor-se-resize border-2 border-white pointer-events-auto"
-                                    onMouseDown={(e) => handleDragStart(e, el.id, 'resize')}
+                                  className="absolute -left-[5px] -top-[5px] w-2.5 h-2.5 bg-primary rounded-full border-2 border-white cursor-nw-resize pointer-events-auto"
+                                  onMouseDown={(e) => handleDragStart(e, el.id, "resize-tl")}
+                                />
+                                <div
+                                  className="absolute -right-[5px] -top-[5px] w-2.5 h-2.5 bg-primary rounded-full border-2 border-white cursor-ne-resize pointer-events-auto"
+                                  onMouseDown={(e) => handleDragStart(e, el.id, "resize-tr")}
+                                />
+                                <div
+                                  className="absolute -left-[5px] -bottom-[5px] w-2.5 h-2.5 bg-primary rounded-full border-2 border-white cursor-sw-resize pointer-events-auto"
+                                  onMouseDown={(e) => handleDragStart(e, el.id, "resize-bl")}
+                                />
+                                <div
+                                  className="absolute -right-[5px] -bottom-[5px] w-2.5 h-2.5 bg-primary rounded-full border-2 border-white cursor-se-resize pointer-events-auto"
+                                  onMouseDown={(e) => handleDragStart(e, el.id, "resize-br")}
+                                />
+                                {/* Side handles */}
+                                <div
+                                  className="absolute left-1/2 -translate-x-1/2 -top-[5px] w-2.5 h-2.5 bg-primary rounded-full border-2 border-white cursor-n-resize pointer-events-auto"
+                                  onMouseDown={(e) => handleDragStart(e, el.id, "resize-t")}
+                                />
+                                <div
+                                  className="absolute left-1/2 -translate-x-1/2 -bottom-[5px] w-2.5 h-2.5 bg-primary rounded-full border-2 border-white cursor-s-resize pointer-events-auto"
+                                  onMouseDown={(e) => handleDragStart(e, el.id, "resize-b")}
+                                />
+                                <div
+                                  className="absolute -left-[5px] top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-primary rounded-full border-2 border-white cursor-w-resize pointer-events-auto"
+                                  onMouseDown={(e) => handleDragStart(e, el.id, "resize-l")}
+                                />
+                                <div
+                                  className="absolute -right-[5px] top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-primary rounded-full border-2 border-white cursor-e-resize pointer-events-auto"
+                                  onMouseDown={(e) => handleDragStart(e, el.id, "resize-r")}
                                 />
                               </>
                           )}
