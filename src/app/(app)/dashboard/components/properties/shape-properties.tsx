@@ -26,7 +26,7 @@ export default function ShapeProperties({ properties, onUpdate }: ShapePropertie
             </div>
             <div>
                 <Label>Color</Label>
-                <Input type="text" value={properties.color || '#000000'} onChange={e => onUpdate({ color: e.target.value })} />
+                <Input type="color" value={properties.color || '#000000'} onChange={e => onUpdate({ color: e.target.value })} className="h-10" />
             </div>
         </div>
     );
