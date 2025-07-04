@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useEffect } from "react";
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useDrop } from 'react-dnd';
@@ -286,7 +286,7 @@ function Editor() {
     }, []);
 
   // Effect for mouse move and up listeners
-  React.useEffect(() => {
+  useEffect(() => {
     if (dragInfo) {
       document.body.style.cursor = dragInfo.type === 'move' ? 'grabbing' : 'se-resize';
       document.body.style.userSelect = 'none';
