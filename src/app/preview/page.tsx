@@ -57,6 +57,24 @@ const renderElementContent = (element: PreviewElement) => {
         if (properties.shape === 'ellipse') {
           return <div style={{ ...style, backgroundColor: properties.color, borderRadius: '50%' }} />;
         }
+        if (properties.shape === 'triangle') {
+          return (
+            <div style={style}>
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ width: '100%', height: '100%'}}>
+                  <polygon points="50,0 100,100 0,100" fill={properties.color} />
+              </svg>
+            </div>
+          );
+        }
+        if (properties.shape === 'star') {
+          return (
+            <div style={style}>
+              <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ width: '100%', height: '100%'}}>
+                  <polygon points="50,0 61.8,38.2 100,38.2 69.1,61.8 80.9,100 50,76.4 19.1,100 30.9,61.8 0,38.2 38.2,38.2" fill={properties.color} />
+              </svg>
+            </div>
+          );
+        }
         return <div style={{ ...style, backgroundColor: properties.color }} />;
       default:
         // For unimplemented types like Video, Clock, etc., show a placeholder.

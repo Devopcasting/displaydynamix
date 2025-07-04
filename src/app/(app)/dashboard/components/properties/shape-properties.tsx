@@ -21,6 +21,8 @@ export default function ShapeProperties({ properties, onUpdate }: ShapePropertie
                     <SelectContent>
                         <SelectItem value="rectangle">Rectangle</SelectItem>
                         <SelectItem value="ellipse">Ellipse</SelectItem>
+                        <SelectItem value="triangle">Triangle</SelectItem>
+                        <SelectItem value="star">Star</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
