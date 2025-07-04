@@ -27,6 +27,7 @@ import {
   LucideIcon,
   Loader2,
   RotateCcw,
+  ScrollText,
 } from "lucide-react";
 import AiLayoutSuggestions from "./components/ai-layout-suggestions";
 import { DraggableElement, ItemTypes } from "./components/draggable-element";
@@ -37,6 +38,7 @@ import { DraggableLayout } from "./components/draggable-layout";
 const elements = [
   { icon: Type, label: "Text" },
   { icon: ImageIcon, label: "Image" },
+  { icon: ScrollText, label: "Marquee" },
   { icon: Video, label: "Video" },
   { icon: Shapes, label: "Shapes" },
   { icon: Clock, label: "Time/Date" },
@@ -95,6 +97,8 @@ function Editor() {
         return { content: 'Double-click to edit', fontSize: 24, color: '#000000' };
       case 'Image':
         return { src: 'https://placehold.co/300x200.png', objectFit: 'cover' };
+      case 'Marquee':
+        return { content: 'Scrolling text...', fontSize: 24, color: '#000000', speed: 5 };
       case 'Shapes':
         return { shape: 'rectangle', color: 'hsl(var(--primary))' };
       default:
@@ -293,7 +297,7 @@ function Editor() {
           height: Math.max(20, newHeight)
         });
       }
-    }, [dragInfo, updateElement]);
+    }, [dragInfo]);
 
     const handleMouseUp = useCallback(() => {
       setDragInfo(null);
@@ -331,6 +335,29 @@ function Editor() {
         return <div style={{ ...style, fontSize: properties.fontSize, color: properties.color, textAlign: 'center', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>{properties.content}</div>;
       case 'Image':
         return <img src={properties.src} alt="" style={{ ...style, objectFit: properties.objectFit || 'cover' }} />;
+      case 'Marquee':
+        const animationDuration = 20 / (properties.speed || 5);
+        return (
+          <div style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <style>{`
+              @keyframes marqueeAnimation {
+                0% { transform: translateX(100%); }
+                100% { transform: translateX(-100%); }
+              }
+            `}</style>
+            <div
+              style={{
+                position: 'absolute',
+                whiteSpace: 'nowrap',
+                color: properties.color,
+                fontSize: properties.fontSize,
+                animation: `marqueeAnimation ${animationDuration}s linear infinite`,
+              }}
+            >
+              {properties.content}
+            </div>
+          </div>
+        );
       case 'Shapes':
         if (properties.shape === 'ellipse') {
           return <div style={{ ...style, backgroundColor: properties.color, borderRadius: '50%' }} />;
