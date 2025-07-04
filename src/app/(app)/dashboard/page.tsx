@@ -8,12 +8,6 @@ import { useDrop } from 'react-dnd';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Type,
   Image as ImageIcon,
   Video,
@@ -36,6 +30,7 @@ import {
 import AiLayoutSuggestions from "./components/ai-layout-suggestions";
 import { DraggableElement, ItemTypes } from "./components/draggable-element";
 import PropertiesPanel from "./components/properties-panel";
+import LayoutDialog from "./components/layout-dialog";
 
 const elements = [
   { icon: Type, label: "Text" },
@@ -82,6 +77,7 @@ function Editor() {
     elementStartWidth: number;
     elementStartHeight: number;
   } | null>(null);
+  const [isLayoutDialogOpen, setIsLayoutDialogOpen] = useState(false);
 
   const updateElement = useCallback((id: number, updates: Partial<CanvasElement>) => {
     setCanvasElements(prev =>
@@ -314,6 +310,11 @@ function Editor() {
 
   return (
     <div className="flex flex-col h-full bg-muted/40">
+      <LayoutDialog
+        open={isLayoutDialogOpen}
+        onOpenChange={setIsLayoutDialogOpen}
+        onApplyLayout={handleApplyLayout}
+      />
       <header className="flex items-center justify-between h-14 px-4 border-b bg-background">
         <h1 className="text-lg font-semibold">Untitled Template</h1>
         <div className="flex items-center gap-2">
@@ -342,20 +343,10 @@ function Editor() {
                {tools.map((tool) => {
                  if (tool.label === "Layouts") {
                   return (
-                    <DropdownMenu key={tool.label}>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="flex flex-col h-20 w-full">
-                          <tool.icon className="w-6 h-6 mb-1" />
-                          <span className="text-xs">{tool.label}</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem onClick={() => handleApplyLayout('column')}>Vertical Stack</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleApplyLayout('row')}>Horizontal Row</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleApplyLayout('grid')}>Grid</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleApplyLayout('main-sidebar')}>Main with Sidebar</DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    <Button key={tool.label} variant="outline" className="flex flex-col h-20 w-full" onClick={() => setIsLayoutDialogOpen(true)}>
+                      <tool.icon className="w-6 h-6 mb-1" />
+                      <span className="text-xs">{tool.label}</span>
+                    </Button>
                   );
                 }
                  return (
