@@ -109,6 +109,7 @@ function Editor() {
         
         if (droppedItemType === ItemTypes.LAYOUT) {
           setIsApplyingLayout(true);
+          // Defer the execution to ensure the canvas has been rendered and its dimensions are available
           setTimeout(() => {
             if (!canvasRef.current) {
               setIsApplyingLayout(false);
@@ -120,8 +121,11 @@ function Editor() {
             const padding = 16;
             const layoutType = item.type;
             
+            // Use a functional update to get the latest state of canvasElements
             setCanvasElements(currentElements => {
-                if (currentElements.length === 0) return currentElements;
+                if (currentElements.length === 0) {
+                    return currentElements; // No elements to rearrange
+                }
 
                 const numElements = currentElements.length;
                 let newElements: CanvasElement[];
@@ -204,7 +208,7 @@ function Editor() {
                 return newElements;
             });
             setIsApplyingLayout(false);
-          }, 50);
+          }, 50); // A small delay is enough
 
         } else if (droppedItemType === ItemTypes.ELEMENT) {
           const offset = monitor.getClientOffset();
@@ -236,7 +240,7 @@ function Editor() {
         itemType: monitor.getItemType()
       }),
     }),
-    [getDefaultProperties]
+    [getDefaultProperties] // Keep this dependency array minimal
   );
   
   drop(canvasRef);
@@ -434,7 +438,7 @@ function Editor() {
                           style={{ position: 'absolute', top: `${el.y}px`, left: `${el.x}px`, width: `${el.width}px`, height: `${el.height}px` }} 
                           className="cursor-grab"
                         >
-                          <div className="w-full h-full border-2 border-dotted border-black">
+                          <div className="w-full h-full border-4 border-dotted border-black">
                             {renderElementContent(el)}
                           </div>
                           {isSelected && (
