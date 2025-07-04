@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -6,6 +7,12 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useDrop } from 'react-dnd';
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Type,
   Image as ImageIcon,
@@ -24,6 +31,7 @@ import {
   ZoomIn,
   ZoomOut,
   LucideIcon,
+  LayoutTemplate,
 } from "lucide-react";
 import AiLayoutSuggestions from "./components/ai-layout-suggestions";
 import { DraggableElement, ItemTypes } from "./components/draggable-element";
@@ -42,6 +50,7 @@ const elements = [
 ];
 
 const tools = [
+  { icon: LayoutTemplate, label: "Layouts" },
   { icon: Layers, label: "Layers" },
   { icon: Palette, label: "Colors" },
   { icon: Play, label: "Animations" },
@@ -94,6 +103,90 @@ function Editor() {
         return {};
     }
   };
+
+  const handleApplyLayout = useCallback((layoutType: 'column' | 'row' | 'grid' | 'main-sidebar') => {
+    if (!canvasRef.current || canvasElements.length === 0) return;
+
+    const canvasWidth = canvasRef.current.offsetWidth;
+    const canvasHeight = canvasRef.current.offsetHeight;
+    const numElements = canvasElements.length;
+    const padding = 16;
+
+    let updatedElements: CanvasElement[] = [];
+
+    switch (layoutType) {
+      case 'column':
+        const colHeight = (canvasHeight - (padding * (numElements + 1))) / numElements;
+        updatedElements = canvasElements.map((el, index) => ({
+          ...el,
+          x: padding,
+          y: padding + index * (colHeight + padding),
+          width: canvasWidth - (padding * 2),
+          height: colHeight,
+        }));
+        break;
+      
+      case 'row':
+        const rowWidth = (canvasWidth - (padding * (numElements + 1))) / numElements;
+        updatedElements = canvasElements.map((el, index) => ({
+          ...el,
+          x: padding + index * (rowWidth + padding),
+          y: padding,
+          width: rowWidth,
+          height: canvasHeight - (padding * 2),
+        }));
+        break;
+
+      case 'grid':
+        const cols = Math.ceil(Math.sqrt(numElements));
+        const rows = Math.ceil(numElements / cols);
+        const gridCellWidth = (canvasWidth - (padding * (cols + 1))) / cols;
+        const gridCellHeight = (canvasHeight - (padding * (rows + 1))) / rows;
+        
+        updatedElements = canvasElements.map((el, index) => {
+          const colIndex = index % cols;
+          const rowIndex = Math.floor(index / cols);
+          return {
+            ...el,
+            x: padding + colIndex * (gridCellWidth + padding),
+            y: padding + rowIndex * (gridCellHeight + padding),
+            width: gridCellWidth,
+            height: gridCellHeight,
+          };
+        });
+        break;
+
+      case 'main-sidebar':
+        if (numElements === 0) break;
+        const sidebarWidth = canvasWidth * 0.3;
+        const mainWidth = canvasWidth - sidebarWidth - (padding * 3);
+
+        updatedElements = canvasElements.map((el, index) => {
+          if (index === 0) { // Main element
+            return {
+              ...el,
+              x: padding,
+              y: padding,
+              width: mainWidth,
+              height: canvasHeight - (padding * 2),
+            };
+          } else { // Sidebar elements
+            const sidebarElementsCount = numElements - 1;
+            const sidebarElHeight = sidebarElementsCount > 0 ? (canvasHeight - (padding * (sidebarElementsCount + 1))) / sidebarElementsCount : 0;
+            return {
+              ...el,
+              x: mainWidth + (padding * 2),
+              y: padding + (index - 1) * (sidebarElHeight + padding),
+              width: sidebarWidth,
+              height: sidebarElHeight,
+            };
+          }
+        });
+        break;
+    }
+
+    setCanvasElements(updatedElements);
+  }, [canvasElements, setCanvasElements]);
 
   const [{ isOver }, drop] = useDrop(
     () => ({
@@ -246,12 +339,32 @@ function Editor() {
             </div>
             <h2 className="text-md font-semibold my-4">Tools</h2>
             <div className="grid grid-cols-2 gap-2">
-               {tools.map((tool) => (
-                <Button key={tool.label} variant="outline" className="flex flex-col h-20">
-                  <tool.icon className="w-6 h-6 mb-1" />
-                  <span className="text-xs">{tool.label}</span>
-                </Button>
-              ))}
+               {tools.map((tool) => {
+                 if (tool.label === "Layouts") {
+                  return (
+                    <DropdownMenu key={tool.label}>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" className="flex flex-col h-20 w-full">
+                          <tool.icon className="w-6 h-6 mb-1" />
+                          <span className="text-xs">{tool.label}</span>
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => handleApplyLayout('column')}>Vertical Stack</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleApplyLayout('row')}>Horizontal Row</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleApplyLayout('grid')}>Grid</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleApplyLayout('main-sidebar')}>Main with Sidebar</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  );
+                }
+                 return (
+                  <Button key={tool.label} variant="outline" className="flex flex-col h-20">
+                    <tool.icon className="w-6 h-6 mb-1" />
+                    <span className="text-xs">{tool.label}</span>
+                  </Button>
+                )
+               })}
             </div>
           </div>
         </aside>
