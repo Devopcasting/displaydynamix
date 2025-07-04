@@ -77,14 +77,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {navItems.map((item) => (
               <SidebarMenuItem key={item.href}>
                 <SidebarMenuButton
-                  asChild
                   isActive={pathname === item.href}
                   onClick={() => router.push(item.href)}
                 >
-                  <>
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </>
+                  <item.icon />
+                  <span>{item.label}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
