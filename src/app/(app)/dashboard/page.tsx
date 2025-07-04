@@ -204,7 +204,7 @@ function Editor() {
                 return newElements;
             });
             setIsApplyingLayout(false);
-          }, 50); // A small delay to ensure the DOM is ready
+          }, 50);
 
         } else if (droppedItemType === ItemTypes.ELEMENT) {
           const offset = monitor.getClientOffset();
@@ -217,7 +217,7 @@ function Editor() {
               id: Date.now(),
               type: item.type,
               icon: item.icon,
-              x: x - 100, // center the drop
+              x: x - 100,
               y: y - 25,
               width: 200,
               height: 50,
@@ -335,9 +335,10 @@ function Editor() {
 
   const getCanvasBgColor = () => {
     if (isOver && canDrop) {
-      return itemType === ItemTypes.LAYOUT 
-        ? 'hsl(var(--primary)/0.1)' 
-        : 'hsl(var(--accent)/0.1)';
+      if (itemType === ItemTypes.LAYOUT) {
+        return 'hsl(var(--muted))';
+      }
+      return 'hsl(var(--accent)/0.1)';
     }
     return 'transparent';
   };
@@ -369,7 +370,6 @@ function Editor() {
         </div>
       </header>
       <main className="flex-1 flex overflow-hidden">
-        {/* Left Panel: Elements */}
         <aside className="w-64 border-r bg-background overflow-y-auto">
           <div className="p-4 space-y-6">
             <div>
@@ -409,7 +409,6 @@ function Editor() {
           </div>
         </aside>
 
-        {/* Center Panel: Canvas */}
         <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden">
             <div className="w-full h-full bg-background shadow-lg rounded-lg border flex items-center justify-center relative">
                 <div className="absolute top-2 left-2 flex gap-1">
@@ -454,7 +453,6 @@ function Editor() {
             </div>
         </div>
 
-        {/* Right Panel: Properties & AI */}
         <aside className="w-80 border-l bg-background overflow-y-auto">
           <Tabs defaultValue="properties" className="w-full">
             <TabsList className="w-full grid grid-cols-2">
