@@ -108,11 +108,7 @@ function Editor() {
         const droppedItemType = monitor.getItemType();
         
         if (droppedItemType === ItemTypes.LAYOUT) {
-          if (canvasElements.length === 0) {
-            return; // No elements to rearrange
-          }
           setIsApplyingLayout(true);
-          // Defer the execution to ensure the spinner renders and canvas dimensions are correct
           setTimeout(() => {
             if (!canvasRef.current) {
               setIsApplyingLayout(false);
@@ -123,87 +119,100 @@ function Editor() {
             const canvasHeight = canvasRef.current.offsetHeight;
             const padding = 16;
             const layoutType = item.type;
-            const numElements = canvasElements.length;
-            let newElements: CanvasElement[];
 
-            switch (layoutType) {
-              case 'column':
-                const colHeight = (canvasHeight - (padding * (numElements + 1))) / numElements;
-                newElements = canvasElements.map((el, index) => ({
-                  ...el,
-                  x: padding,
-                  y: padding + index * (colHeight + padding),
-                  width: canvasWidth - (padding * 2),
-                  height: colHeight,
-                }));
-                break;
-              
-              case 'row':
-                const rowWidth = (canvasWidth - (padding * (numElements + 1))) / numElements;
-                newElements = canvasElements.map((el, index) => ({
-                  ...el,
-                  x: padding + index * (rowWidth + padding),
-                  y: padding,
-                  width: rowWidth,
-                  height: canvasHeight - (padding * 2),
-                }));
-                break;
+            setCanvasElements(currentElements => {
+                let elementsToArrange = [...currentElements];
 
-              case 'grid':
-                const cols = Math.ceil(Math.sqrt(numElements));
-                const rows = Math.ceil(numElements / cols);
-                const gridCellWidth = (canvasWidth - (padding * (cols + 1))) / cols;
-                const gridCellHeight = (canvasHeight - (padding * (rows + 1))) / rows;
-                
-                newElements = canvasElements.map((el, index) => {
-                  const colIndex = index % cols;
-                  const rowIndex = Math.floor(index / cols);
-                  return {
-                    ...el,
-                    x: padding + colIndex * (gridCellWidth + padding),
-                    y: padding + rowIndex * (gridCellHeight + padding),
-                    width: gridCellWidth,
-                    height: gridCellHeight,
-                  };
-                });
-                break;
-
-              case 'main-sidebar':
-                if (numElements === 0) {
-                  newElements = [...canvasElements];
-                  break;
+                if (elementsToArrange.length === 0) {
+                    elementsToArrange = [
+                        { id: Date.now() + 1, type: 'Text', icon: Type, x: 0, y: 0, width: 200, height: 100, rotation: 0, properties: getDefaultProperties('Text')},
+                        { id: Date.now() + 2, type: 'Image', icon: ImageIcon, x: 0, y: 0, width: 200, height: 100, rotation: 0, properties: getDefaultProperties('Image')},
+                        { id: Date.now() + 3, type: 'Shapes', icon: Shapes, x: 0, y: 0, width: 200, height: 100, rotation: 0, properties: getDefaultProperties('Shapes')},
+                    ];
                 }
-                const sidebarWidth = canvasWidth * 0.3;
-                const mainWidth = canvasWidth - sidebarWidth - (padding * 3);
+                
+                const numElements = elementsToArrange.length;
+                let newElements: CanvasElement[];
 
-                newElements = canvasElements.map((el, index) => {
-                  if (index === 0) { // Main element
-                    return {
+                switch (layoutType) {
+                  case 'column':
+                    const colHeight = (canvasHeight - (padding * (numElements + 1))) / numElements;
+                    newElements = elementsToArrange.map((el, index) => ({
                       ...el,
                       x: padding,
-                      y: padding,
-                      width: mainWidth,
-                      height: canvasHeight - (padding * 2),
-                    };
-                  } else { // Sidebar elements
-                    const sidebarElementsCount = numElements - 1;
-                    const sidebarElHeight = sidebarElementsCount > 0 ? (canvasHeight - (padding * (sidebarElementsCount + 1))) / sidebarElementsCount : 0;
-                    return {
+                      y: padding + index * (colHeight + padding),
+                      width: canvasWidth - (padding * 2),
+                      height: colHeight,
+                    }));
+                    break;
+                  
+                  case 'row':
+                    const rowWidth = (canvasWidth - (padding * (numElements + 1))) / numElements;
+                    newElements = elementsToArrange.map((el, index) => ({
                       ...el,
-                      x: mainWidth + (padding * 2),
-                      y: padding + (index - 1) * (sidebarElHeight + padding),
-                      width: sidebarWidth,
-                      height: sidebarElHeight,
-                    };
-                  }
-                });
-                break;
-              default:
-                newElements = [...canvasElements];
-            }
-            setCanvasElements(newElements);
+                      x: padding + index * (rowWidth + padding),
+                      y: padding,
+                      width: rowWidth,
+                      height: canvasHeight - (padding * 2),
+                    }));
+                    break;
+
+                  case 'grid':
+                    const cols = Math.ceil(Math.sqrt(numElements));
+                    const rows = Math.ceil(numElements / cols);
+                    const gridCellWidth = (canvasWidth - (padding * (cols + 1))) / cols;
+                    const gridCellHeight = (canvasHeight - (padding * (rows + 1))) / rows;
+                    
+                    newElements = elementsToArrange.map((el, index) => {
+                      const colIndex = index % cols;
+                      const rowIndex = Math.floor(index / cols);
+                      return {
+                        ...el,
+                        x: padding + colIndex * (gridCellWidth + padding),
+                        y: padding + rowIndex * (gridCellHeight + padding),
+                        width: gridCellWidth,
+                        height: gridCellHeight,
+                      };
+                    });
+                    break;
+
+                  case 'main-sidebar':
+                    if (numElements === 0) {
+                      newElements = [...elementsToArrange];
+                      break;
+                    }
+                    const sidebarWidth = canvasWidth * 0.3;
+                    const mainWidth = canvasWidth - sidebarWidth - (padding * 3);
+
+                    newElements = elementsToArrange.map((el, index) => {
+                      if (index === 0) { // Main element
+                        return {
+                          ...el,
+                          x: padding,
+                          y: padding,
+                          width: mainWidth,
+                          height: canvasHeight - (padding * 2),
+                        };
+                      } else { // Sidebar elements
+                        const sidebarElementsCount = numElements - 1;
+                        const sidebarElHeight = sidebarElementsCount > 0 ? (canvasHeight - (padding * (sidebarElementsCount + 1))) / sidebarElementsCount : 0;
+                        return {
+                          ...el,
+                          x: mainWidth + (padding * 2),
+                          y: padding + (index - 1) * (sidebarElHeight + padding),
+                          width: sidebarWidth,
+                          height: sidebarElHeight,
+                        };
+                      }
+                    });
+                    break;
+                  default:
+                    newElements = [...elementsToArrange];
+                }
+                return newElements;
+            });
             setIsApplyingLayout(false);
-          }, 50); // A small delay is enough
+          }, 50);
 
         } else if (droppedItemType === ItemTypes.ELEMENT) {
           const offset = monitor.getClientOffset();
@@ -235,7 +244,7 @@ function Editor() {
         itemType: monitor.getItemType()
       }),
     }),
-    [canvasElements, getDefaultProperties] // IMPORTANT: This dependency ensures the drop handler always has the latest canvasElements
+    [getDefaultProperties]
   );
   
   drop(canvasRef);
