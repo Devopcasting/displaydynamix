@@ -100,7 +100,7 @@ function Editor() {
     }
   }, []);
 
-  const handleApplyLayout = useCallback((layoutType: 'column' | 'row' | 'grid' | 'main-sidebar') => {
+  const handleApplyLayout = (layoutType: 'column' | 'row' | 'grid' | 'main-sidebar') => {
     setCanvasElements(currentElements => {
       if (!canvasRef.current || currentElements.length === 0) {
         return currentElements;
@@ -182,7 +182,7 @@ function Editor() {
           return currentElements;
       }
     });
-  }, []);
+  };
 
   const [{ isOver }, drop] = useDrop(
     () => ({
