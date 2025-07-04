@@ -6,7 +6,6 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useDrop } from 'react-dnd';
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Type,
   Image as ImageIcon,
@@ -29,7 +28,6 @@ import {
   RotateCcw,
   ScrollText,
 } from "lucide-react";
-import AiLayoutSuggestions from "./components/ai-layout-suggestions";
 import { DraggableElement, ItemTypes } from "./components/draggable-element";
 import PropertiesPanel from "./components/properties-panel";
 import { DraggableLayout } from "./components/draggable-layout";
@@ -555,21 +553,10 @@ function Editor() {
         </div>
 
         <aside className="w-80 border-l bg-background overflow-y-auto">
-          <Tabs defaultValue="properties" className="w-full">
-            <TabsList className="w-full grid grid-cols-2">
-              <TabsTrigger value="properties">Properties</TabsTrigger>
-              <TabsTrigger value="ai">AI Suggestions</TabsTrigger>
-            </TabsList>
-            <TabsContent value="properties" className="p-0">
-              <PropertiesPanel
-                element={selectedElement}
-                onUpdate={updateElement}
-              />
-            </TabsContent>
-            <TabsContent value="ai" className="p-4">
-              <AiLayoutSuggestions />
-            </TabsContent>
-          </Tabs>
+          <PropertiesPanel
+            element={selectedElement}
+            onUpdate={updateElement}
+          />
         </aside>
       </main>
     </div>

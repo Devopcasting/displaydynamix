@@ -3,7 +3,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Search, Upload, Trash2, Folder } from "lucide-react";
-import AiAssetSuggestions from "./components/ai-asset-suggestions";
 
 const mediaAssets = [
   { name: "Corporate Event Highlights", type: "video", src: "https://placehold.co/400x225.png", hint: "corporate event" },
@@ -26,7 +25,6 @@ export default function MediaPage() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input type="search" placeholder="Search assets..." className="pl-8" />
           </div>
-          <AiAssetSuggestions />
           <Button>
             <Upload className="mr-2" />
             Upload
