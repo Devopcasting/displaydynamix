@@ -87,8 +87,8 @@ export default function DashboardPage() {
                     <Button variant="ghost" size="icon"><ZoomIn/></Button>
                     <Button variant="ghost" size="icon"><ZoomOut/></Button>
                 </div>
-                <div className="w-[80%] h-[80%] bg-muted/50 border-2 border-dashed flex items-center justify-center">
-                    <p className="text-muted-foreground">Canvas (1920x1080)</p>
+                <div className="w-[80%] h-[80%] border-2 border-dashed flex items-center justify-center bg-[linear-gradient(to_right,theme(colors.border)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.border)_1px,transparent_1px)] bg-[size:2rem_2rem]">
+                    <p className="text-muted-foreground bg-background px-2 rounded-sm">Canvas (1920x1080)</p>
                 </div>
             </div>
         </div>
