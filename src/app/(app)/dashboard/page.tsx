@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback } from "react";
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useDrop } from 'react-dnd';
@@ -25,12 +25,12 @@ import {
   ZoomIn,
   ZoomOut,
   LucideIcon,
-  LayoutTemplate,
 } from "lucide-react";
 import AiLayoutSuggestions from "./components/ai-layout-suggestions";
 import { DraggableElement, ItemTypes } from "./components/draggable-element";
 import PropertiesPanel from "./components/properties-panel";
-import LayoutDialog from "./components/layout-dialog";
+import { DraggableLayout } from "./components/draggable-layout";
+
 
 const elements = [
   { icon: Type, label: "Text" },
@@ -44,11 +44,11 @@ const elements = [
   { icon: QrCode, label: "QR Code" },
 ];
 
-const tools = [
-  { icon: LayoutTemplate, label: "Layouts" },
-  { icon: Layers, label: "Layers" },
-  { icon: Palette, label: "Colors" },
-  { icon: Play, label: "Animations" },
+const layouts = [
+  { name: "Vertical Stack", type: 'column' as const },
+  { name: "Horizontal Row", type: 'row' as const },
+  { name: "Grid", type: 'grid' as const },
+  { name: "Main with Sidebar", type: 'main-sidebar' as const },
 ];
 
 export interface CanvasElement {
@@ -77,7 +77,6 @@ function Editor() {
     elementStartWidth: number;
     elementStartHeight: number;
   } | null>(null);
-  const [isLayoutDialogOpen, setIsLayoutDialogOpen] = useState(false);
 
   const updateElement = useCallback((id: number, updates: Partial<CanvasElement>) => {
     setCanvasElements(prev =>
@@ -100,10 +99,8 @@ function Editor() {
     }
   }, []);
 
-  const handleApplyLayout = (layoutType: 'column' | 'row' | 'grid' | 'main-sidebar') => {
-    setIsLayoutDialogOpen(false);
-
-    // Defer the layout application to ensure the dialog is closed and canvas has correct dimensions.
+  const handleApplyLayout = useCallback((layoutType: 'column' | 'row' | 'grid' | 'main-sidebar') => {
+    // Defer the layout application to ensure canvas has correct dimensions.
     setTimeout(() => {
         if (!canvasRef.current) {
             return;
@@ -199,43 +196,54 @@ function Editor() {
             return newElements;
         });
     }, 0);
-  };
+  }, []);
 
-  const [{ isOver }, drop] = useDrop(
+  const [{ isOver, canDrop, itemType }, drop] = useDrop(
     () => ({
-      accept: ItemTypes.ELEMENT,
-      drop: (item: { type: string; icon: LucideIcon }, monitor) => {
-        const offset = monitor.getClientOffset();
-        if (offset && canvasRef.current) {
-          const canvasBounds = canvasRef.current.getBoundingClientRect();
-          const x = offset.x - canvasBounds.left;
-          const y = offset.y - canvasBounds.top;
-          
-          const newElement: CanvasElement = {
-            id: Date.now(),
-            type: item.type,
-            icon: item.icon,
-            x: x - 100, // center the drop
-            y: y - 25,
-            width: 200,
-            height: 50,
-            rotation: 0,
-            properties: getDefaultProperties(item.type),
-          };
-          
-          setCanvasElements((prev) => [...prev, newElement]);
-          setSelectedElementId(newElement.id);
+      accept: [ItemTypes.ELEMENT, ItemTypes.LAYOUT],
+      drop: (item: { type: string; icon?: LucideIcon }, monitor) => {
+        const droppedItemType = monitor.getItemType();
+        
+        if (droppedItemType === ItemTypes.LAYOUT) {
+          handleApplyLayout(item.type as 'column' | 'row' | 'grid' | 'main-sidebar');
+        } else if (droppedItemType === ItemTypes.ELEMENT) {
+          const offset = monitor.getClientOffset();
+          if (offset && canvasRef.current && item.icon) {
+            const canvasBounds = canvasRef.current.getBoundingClientRect();
+            const x = offset.x - canvasBounds.left;
+            const y = offset.y - canvasBounds.top;
+            
+            const newElement: CanvasElement = {
+              id: Date.now(),
+              type: item.type,
+              icon: item.icon,
+              x: x - 100, // center the drop
+              y: y - 25,
+              width: 200,
+              height: 50,
+              rotation: 0,
+              properties: getDefaultProperties(item.type),
+            };
+            
+            setCanvasElements((prev) => [...prev, newElement]);
+            setSelectedElementId(newElement.id);
+          }
         }
       },
-      collect: (monitor) => ({ isOver: !!monitor.isOver() }),
+      collect: (monitor) => ({ 
+        isOver: !!monitor.isOver(),
+        canDrop: !!monitor.canDrop(),
+        itemType: monitor.getItemType()
+      }),
     }),
-    [getDefaultProperties]
+    [getDefaultProperties, handleApplyLayout]
   );
   
   drop(canvasRef);
 
   const handleDragStart = (e: React.MouseEvent, id: number, type: 'move' | 'resize') => {
     e.stopPropagation();
+    e.preventDefault();
     const element = canvasElements.find(el => el.id === id);
     if (!element) return;
 
@@ -252,10 +260,9 @@ function Editor() {
     });
   };
 
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
       if (!dragInfo) return;
-
+      
       const dx = e.clientX - dragInfo.startX;
       const dy = e.clientY - dragInfo.startY;
 
@@ -272,12 +279,14 @@ function Editor() {
           height: Math.max(20, newHeight)
         });
       }
-    };
+    }, [dragInfo, updateElement]);
 
-    const handleMouseUp = () => {
+    const handleMouseUp = useCallback(() => {
       setDragInfo(null);
-    };
+    }, []);
 
+  // Effect for mouse move and up listeners
+  React.useEffect(() => {
     if (dragInfo) {
       document.body.style.cursor = dragInfo.type === 'move' ? 'grabbing' : 'se-resize';
       document.body.style.userSelect = 'none';
@@ -291,7 +300,8 @@ function Editor() {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [dragInfo, updateElement]);
+  }, [dragInfo, handleMouseMove, handleMouseUp]);
+
 
   const renderElementContent = (element: CanvasElement) => {
     const { type, properties } = element;
@@ -324,14 +334,28 @@ function Editor() {
     }
   };
 
+  const getCanvasBgColor = () => {
+    if (isOver && canDrop) {
+      return itemType === ItemTypes.LAYOUT 
+        ? 'hsl(var(--primary)/0.1)' 
+        : 'hsl(var(--accent)/0.1)';
+    }
+    return 'transparent';
+  };
+  
+  const getDropMessage = () => {
+      if (isOver && canDrop) {
+          if(itemType === ItemTypes.LAYOUT) return <p className="text-primary bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">Drop to apply layout</p>;
+          if(itemType === ItemTypes.ELEMENT) return <p className="text-accent-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">Drop to add element</p>;
+      }
+      if (canvasElements.length === 0) {
+        return <p className="text-muted-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">Drop elements here</p>;
+      }
+      return null;
+  }
 
   return (
     <div className="flex flex-col h-full bg-muted/40">
-      <LayoutDialog
-        open={isLayoutDialogOpen}
-        onOpenChange={setIsLayoutDialogOpen}
-        onApplyLayout={handleApplyLayout}
-      />
       <header className="flex items-center justify-between h-14 px-4 border-b bg-background">
         <h1 className="text-lg font-semibold">Untitled Template</h1>
         <div className="flex items-center gap-2">
@@ -348,31 +372,40 @@ function Editor() {
       <main className="flex-1 flex overflow-hidden">
         {/* Left Panel: Elements */}
         <aside className="w-64 border-r bg-background overflow-y-auto">
-          <div className="p-4">
-            <h2 className="text-md font-semibold mb-4">Elements</h2>
-            <div className="grid grid-cols-2 gap-2">
-              {elements.map((el) => (
-                <DraggableElement key={el.label} label={el.label} icon={el.icon} />
-              ))}
+          <div className="p-4 space-y-6">
+            <div>
+              <h2 className="text-md font-semibold mb-4">Elements</h2>
+              <div className="grid grid-cols-2 gap-2">
+                {elements.map((el) => (
+                  <DraggableElement key={el.label} label={el.label} icon={el.icon} />
+                ))}
+              </div>
             </div>
-            <h2 className="text-md font-semibold my-4">Tools</h2>
-            <div className="grid grid-cols-2 gap-2">
-               {tools.map((tool) => {
-                 if (tool.label === "Layouts") {
-                  return (
-                    <Button key={tool.label} variant="outline" className="flex flex-col h-20 w-full" onClick={() => setIsLayoutDialogOpen(true)}>
-                      <tool.icon className="w-6 h-6 mb-1" />
-                      <span className="text-xs">{tool.label}</span>
+             <div>
+                <h2 className="text-md font-semibold mb-4">Layouts</h2>
+                <p className="text-xs text-muted-foreground mb-2">Drag a layout onto the canvas to apply it.</p>
+                <div className="grid grid-cols-2 gap-2">
+                    {layouts.map((layout) => (
+                        <DraggableLayout key={layout.type} name={layout.name} type={layout.type} />
+                    ))}
+                </div>
+            </div>
+             <div>
+                 <h2 className="text-md font-semibold mb-4">Other Tools</h2>
+                 <div className="grid grid-cols-2 gap-2">
+                    <Button variant="outline" className="flex flex-col h-20">
+                        <Layers className="w-6 h-6 mb-1" />
+                        <span className="text-xs">Layers</span>
                     </Button>
-                  );
-                }
-                 return (
-                  <Button key={tool.label} variant="outline" className="flex flex-col h-20">
-                    <tool.icon className="w-6 h-6 mb-1" />
-                    <span className="text-xs">{tool.label}</span>
-                  </Button>
-                )
-               })}
+                    <Button variant="outline" className="flex flex-col h-20">
+                        <Palette className="w-6 h-6 mb-1" />
+                        <span className="text-xs">Colors</span>
+                    </Button>
+                     <Button variant="outline" className="flex flex-col h-20">
+                        <Play className="w-6 h-6 mb-1" />
+                        <span className="text-xs">Animations</span>
+                    </Button>
+                 </div>
             </div>
           </div>
         </aside>
@@ -384,10 +417,10 @@ function Editor() {
                     <Button variant="ghost" size="icon"><ZoomIn/></Button>
                     <Button variant="ghost" size="icon"><ZoomOut/></Button>
                 </div>
-                <div ref={canvasRef} className="w-[80%] h-[80%] border-2 border-dashed relative bg-[linear-gradient(to_right,theme(colors.border)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.border)_1px,transparent_1px)] bg-[size:2rem_2rem]" style={{ backgroundColor: isOver ? 'hsl(var(--accent)/0.1)' : 'transparent', transition: 'background-color 0.2s' }}
+                <div ref={canvasRef} className="w-[80%] h-[80%] border-2 border-dashed relative bg-[linear-gradient(to_right,theme(colors.border)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.border)_1px,transparent_1px)] bg-[size:2rem_2rem]" style={{ backgroundColor: getCanvasBgColor(), transition: 'background-color 0.2s' }}
                   onClick={() => setSelectedElementId(null)}
                 >
-                    {canvasElements.length === 0 && <p className="text-muted-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">Drop elements here</p>}
+                    {getDropMessage()}
                     {canvasElements.map((el) => {
                       const isSelected = selectedElementId === el.id;
                       return (

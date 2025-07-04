@@ -6,6 +6,7 @@ import type { LucideIcon } from 'lucide-react';
 
 export const ItemTypes = {
   ELEMENT: 'element',
+  LAYOUT: 'layout',
 };
 
 export interface DraggableElementProps {
