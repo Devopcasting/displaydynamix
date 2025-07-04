@@ -100,89 +100,95 @@ function Editor() {
     }
   }, []);
 
-  const handleApplyLayout = (layoutType: 'column' | 'row' | 'grid' | 'main-sidebar') => {
-    setCanvasElements(currentElements => {
-      if (!canvasRef.current || currentElements.length === 0) {
-        return currentElements;
-      }
+  const handleApplyLayout = useCallback((layoutType: 'column' | 'row' | 'grid' | 'main-sidebar') => {
+    if (!canvasRef.current || canvasElements.length === 0) {
+      return;
+    }
 
-      const canvasWidth = canvasRef.current.offsetWidth;
-      const canvasHeight = canvasRef.current.offsetHeight;
-      const numElements = currentElements.length;
-      const padding = 16;
-  
-      switch (layoutType) {
-        case 'column':
-          const colHeight = (canvasHeight - (padding * (numElements + 1))) / numElements;
-          return currentElements.map((el, index) => ({
-            ...el,
-            x: padding,
-            y: padding + index * (colHeight + padding),
-            width: canvasWidth - (padding * 2),
-            height: colHeight,
-          }));
+    const canvasWidth = canvasRef.current.offsetWidth;
+    const canvasHeight = canvasRef.current.offsetHeight;
+    const numElements = canvasElements.length;
+    const padding = 16;
+
+    let newElements: CanvasElement[];
+
+    switch (layoutType) {
+      case 'column':
+        const colHeight = (canvasHeight - (padding * (numElements + 1))) / numElements;
+        newElements = canvasElements.map((el, index) => ({
+          ...el,
+          x: padding,
+          y: padding + index * (colHeight + padding),
+          width: canvasWidth - (padding * 2),
+          height: colHeight,
+        }));
+        break;
+      
+      case 'row':
+        const rowWidth = (canvasWidth - (padding * (numElements + 1))) / numElements;
+        newElements = canvasElements.map((el, index) => ({
+          ...el,
+          x: padding + index * (rowWidth + padding),
+          y: padding,
+          width: rowWidth,
+          height: canvasHeight - (padding * 2),
+        }));
+        break;
+
+      case 'grid':
+        const cols = Math.ceil(Math.sqrt(numElements));
+        const rows = Math.ceil(numElements / cols);
+        const gridCellWidth = (canvasWidth - (padding * (cols + 1))) / cols;
+        const gridCellHeight = (canvasHeight - (padding * (rows + 1))) / rows;
         
-        case 'row':
-          const rowWidth = (canvasWidth - (padding * (numElements + 1))) / numElements;
-          return currentElements.map((el, index) => ({
+        newElements = canvasElements.map((el, index) => {
+          const colIndex = index % cols;
+          const rowIndex = Math.floor(index / cols);
+          return {
             ...el,
-            x: padding + index * (rowWidth + padding),
-            y: padding,
-            width: rowWidth,
-            height: canvasHeight - (padding * 2),
-          }));
+            x: padding + colIndex * (gridCellWidth + padding),
+            y: padding + rowIndex * (gridCellHeight + padding),
+            width: gridCellWidth,
+            height: gridCellHeight,
+          };
+        });
+        break;
 
-        case 'grid':
-          const cols = Math.ceil(Math.sqrt(numElements));
-          const rows = Math.ceil(numElements / cols);
-          const gridCellWidth = (canvasWidth - (padding * (cols + 1))) / cols;
-          const gridCellHeight = (canvasHeight - (padding * (rows + 1))) / rows;
-          
-          return currentElements.map((el, index) => {
-            const colIndex = index % cols;
-            const rowIndex = Math.floor(index / cols);
+      case 'main-sidebar':
+        if (numElements === 0) {
+          newElements = [...canvasElements];
+          break;
+        }
+        const sidebarWidth = canvasWidth * 0.3;
+        const mainWidth = canvasWidth - sidebarWidth - (padding * 3);
+
+        newElements = canvasElements.map((el, index) => {
+          if (index === 0) { // Main element
             return {
               ...el,
-              x: padding + colIndex * (gridCellWidth + padding),
-              y: padding + rowIndex * (gridCellHeight + padding),
-              width: gridCellWidth,
-              height: gridCellHeight,
+              x: padding,
+              y: padding,
+              width: mainWidth,
+              height: canvasHeight - (padding * 2),
             };
-          });
-
-        case 'main-sidebar':
-          if (numElements === 0) {
-            return currentElements;
+          } else { // Sidebar elements
+            const sidebarElementsCount = numElements - 1;
+            const sidebarElHeight = sidebarElementsCount > 0 ? (canvasHeight - (padding * (sidebarElementsCount + 1))) / sidebarElementsCount : 0;
+            return {
+              ...el,
+              x: mainWidth + (padding * 2),
+              y: padding + (index - 1) * (sidebarElHeight + padding),
+              width: sidebarWidth,
+              height: sidebarElHeight,
+            };
           }
-          const sidebarWidth = canvasWidth * 0.3;
-          const mainWidth = canvasWidth - sidebarWidth - (padding * 3);
-  
-          return currentElements.map((el, index) => {
-            if (index === 0) { // Main element
-              return {
-                ...el,
-                x: padding,
-                y: padding,
-                width: mainWidth,
-                height: canvasHeight - (padding * 2),
-              };
-            } else { // Sidebar elements
-              const sidebarElementsCount = numElements - 1;
-              const sidebarElHeight = sidebarElementsCount > 0 ? (canvasHeight - (padding * (sidebarElementsCount + 1))) / sidebarElementsCount : 0;
-              return {
-                ...el,
-                x: mainWidth + (padding * 2),
-                y: padding + (index - 1) * (sidebarElHeight + padding),
-                width: sidebarWidth,
-                height: sidebarElHeight,
-              };
-            }
-          });
-        default:
-          return currentElements;
-      }
-    });
-  };
+        });
+        break;
+      default:
+        newElements = [...canvasElements];
+    }
+    setCanvasElements(newElements);
+  }, [canvasElements]);
 
   const [{ isOver }, drop] = useDrop(
     () => ({
