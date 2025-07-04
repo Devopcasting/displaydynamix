@@ -1,5 +1,9 @@
+'use client';
+
+import { useState, useRef } from "react";
+import { DndProvider, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Type,
@@ -18,8 +22,10 @@ import {
   Save,
   ZoomIn,
   ZoomOut,
+  LucideIcon,
 } from "lucide-react";
 import AiLayoutSuggestions from "./components/ai-layout-suggestions";
+import { DraggableElement, ItemTypes } from "./components/draggable-element";
 
 const elements = [
   { icon: Type, label: "Text" },
@@ -39,7 +45,42 @@ const tools = [
   { icon: Play, label: "Animations" },
 ];
 
-export default function DashboardPage() {
+interface CanvasElement {
+  id: number;
+  label: string;
+  icon: LucideIcon;
+  top: number;
+  left: number;
+}
+
+function Editor() {
+  const [canvasElements, setCanvasElements] = useState<CanvasElement[]>([]);
+  const canvasRef = useRef<HTMLDivElement>(null);
+
+  const [{ isOver }, drop] = useDrop(
+    () => ({
+      accept: ItemTypes.ELEMENT,
+      drop: (item: { label: string; icon: LucideIcon }, monitor) => {
+        const offset = monitor.getClientOffset();
+        if (offset && canvasRef.current) {
+          const canvasBounds = canvasRef.current.getBoundingClientRect();
+          const left = offset.x - canvasBounds.left;
+          const top = offset.y - canvasBounds.top;
+          setCanvasElements((prev) => [
+            ...prev,
+            { ...item, id: Date.now(), top, left },
+          ]);
+        }
+      },
+      collect: (monitor) => ({
+        isOver: !!monitor.isOver(),
+      }),
+    }),
+    []
+  );
+
+  drop(canvasRef);
+
   return (
     <div className="flex flex-col h-full bg-muted/40">
       <header className="flex items-center justify-between h-14 px-4 border-b bg-background">
@@ -62,10 +103,7 @@ export default function DashboardPage() {
             <h2 className="text-md font-semibold mb-4">Elements</h2>
             <div className="grid grid-cols-2 gap-2">
               {elements.map((el) => (
-                <Button key={el.label} variant="outline" className="flex flex-col h-20">
-                  <el.icon className="w-6 h-6 mb-1" />
-                  <span className="text-xs">{el.label}</span>
-                </Button>
+                <DraggableElement key={el.label} label={el.label} icon={el.icon} />
               ))}
             </div>
             <h2 className="text-md font-semibold my-4">Tools</h2>
@@ -87,8 +125,17 @@ export default function DashboardPage() {
                     <Button variant="ghost" size="icon"><ZoomIn/></Button>
                     <Button variant="ghost" size="icon"><ZoomOut/></Button>
                 </div>
-                <div className="w-[80%] h-[80%] border-2 border-dashed flex items-center justify-center bg-[linear-gradient(to_right,theme(colors.border)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.border)_1px,transparent_1px)] bg-[size:2rem_2rem]">
-                    <p className="text-muted-foreground bg-background px-2 rounded-sm">Canvas (1920x1080)</p>
+                <div ref={canvasRef} className="w-[80%] h-[80%] border-2 border-dashed relative bg-[linear-gradient(to_right,theme(colors.border)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.border)_1px,transparent_1px)] bg-[size:2rem_2rem]" style={{ backgroundColor: isOver ? 'hsl(var(--accent)/0.1)' : 'transparent', transition: 'background-color 0.2s' }}>
+                    {canvasElements.length === 0 && <p className="text-muted-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">Drop elements here</p>}
+                    {canvasElements.map((el) => {
+                      const ElementIcon = el.icon;
+                      return (
+                        <div key={el.id} style={{ position: 'absolute', top: `${el.top}px`, left: `${el.left}px` }} className="p-2 border rounded bg-white shadow-lg flex items-center gap-2 cursor-grab">
+                          <ElementIcon className="w-4 h-4 text-primary" />
+                          <span className="text-sm font-medium">{el.label}</span>
+                        </div>
+                      )
+                    })}
                 </div>
             </div>
         </div>
@@ -113,4 +160,13 @@ export default function DashboardPage() {
       </main>
     </div>
   );
+}
+
+
+export default function DashboardPage() {
+  return (
+    <DndProvider backend={HTML5Backend}>
+      <Editor />
+    </DndProvider>
+  )
 }
