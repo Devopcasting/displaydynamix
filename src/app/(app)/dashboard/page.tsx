@@ -78,6 +78,7 @@ function Editor() {
     elementStartHeight: number;
   } | null>(null);
   const [isLayoutDialogOpen, setIsLayoutDialogOpen] = useState(false);
+  const [pendingLayout, setPendingLayout] = useState<string | null>(null);
 
   const updateElement = useCallback((id: number, updates: Partial<CanvasElement>) => {
     setCanvasElements(prev =>
@@ -101,7 +102,17 @@ function Editor() {
   }, []);
 
   const handleApplyLayout = (layoutType: 'column' | 'row' | 'grid' | 'main-sidebar') => {
-    if (!canvasRef.current) return;
+    setPendingLayout(layoutType);
+    setIsLayoutDialogOpen(false);
+  };
+  
+  useEffect(() => {
+    if (!pendingLayout || isLayoutDialogOpen) return;
+
+    if (!canvasRef.current) {
+        setPendingLayout(null);
+        return;
+    }
 
     const canvasWidth = canvasRef.current.offsetWidth;
     const canvasHeight = canvasRef.current.offsetHeight;
@@ -115,7 +126,7 @@ function Editor() {
         const numElements = currentElements.length;
         let newElements: CanvasElement[];
 
-        switch (layoutType) {
+        switch (pendingLayout) {
           case 'column':
             const colHeight = (canvasHeight - (padding * (numElements + 1))) / numElements;
             newElements = currentElements.map((el, index) => ({
@@ -192,7 +203,9 @@ function Editor() {
         }
         return newElements;
     });
-  };
+    setPendingLayout(null);
+  }, [pendingLayout, isLayoutDialogOpen]);
+
 
   const [{ isOver }, drop] = useDrop(
     () => ({

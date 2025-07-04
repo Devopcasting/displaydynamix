@@ -68,7 +68,6 @@ const LayoutPreview = ({ type }: { type: 'column' | 'row' | 'grid' | 'main-sideb
 export default function LayoutDialog({ open, onOpenChange, onApplyLayout }: LayoutDialogProps) {
   const handleSelectLayout = (layoutType: 'column' | 'row' | 'grid' | 'main-sidebar') => {
     onApplyLayout(layoutType);
-    onOpenChange(false);
   };
 
   return (
