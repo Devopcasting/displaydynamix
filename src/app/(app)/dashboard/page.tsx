@@ -68,7 +68,6 @@ function Editor() {
   const [canvasElements, setCanvasElements] = useState<CanvasElement[]>([]);
   const [selectedElementId, setSelectedElementId] = useState<number | null>(null);
   const [isApplyingLayout, setIsApplyingLayout] = useState(false);
-  const [pendingLayout, setPendingLayout] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [dragInfo, setDragInfo] = useState<{
     type: 'move' | 'resize';
@@ -110,7 +109,103 @@ function Editor() {
         
         if (droppedItemType === ItemTypes.LAYOUT) {
           setIsApplyingLayout(true);
-          setPendingLayout(item.type);
+          setTimeout(() => {
+            if (!canvasRef.current) {
+              setIsApplyingLayout(false);
+              return;
+            }
+
+            const canvasWidth = canvasRef.current.offsetWidth;
+            const canvasHeight = canvasRef.current.offsetHeight;
+            const padding = 16;
+            const layoutType = item.type;
+            
+            setCanvasElements(currentElements => {
+                if (currentElements.length === 0) return currentElements;
+
+                const numElements = currentElements.length;
+                let newElements: CanvasElement[];
+
+                switch (layoutType) {
+                  case 'column':
+                    const colHeight = (canvasHeight - (padding * (numElements + 1))) / numElements;
+                    newElements = currentElements.map((el, index) => ({
+                      ...el,
+                      x: padding,
+                      y: padding + index * (colHeight + padding),
+                      width: canvasWidth - (padding * 2),
+                      height: colHeight,
+                    }));
+                    break;
+                  
+                  case 'row':
+                    const rowWidth = (canvasWidth - (padding * (numElements + 1))) / numElements;
+                    newElements = currentElements.map((el, index) => ({
+                      ...el,
+                      x: padding + index * (rowWidth + padding),
+                      y: padding,
+                      width: rowWidth,
+                      height: canvasHeight - (padding * 2),
+                    }));
+                    break;
+
+                  case 'grid':
+                    const cols = Math.ceil(Math.sqrt(numElements));
+                    const rows = Math.ceil(numElements / cols);
+                    const gridCellWidth = (canvasWidth - (padding * (cols + 1))) / cols;
+                    const gridCellHeight = (canvasHeight - (padding * (rows + 1))) / rows;
+                    
+                    newElements = currentElements.map((el, index) => {
+                      const colIndex = index % cols;
+                      const rowIndex = Math.floor(index / cols);
+                      return {
+                        ...el,
+                        x: padding + colIndex * (gridCellWidth + padding),
+                        y: padding + rowIndex * (gridCellHeight + padding),
+                        width: gridCellWidth,
+                        height: gridCellHeight,
+                      };
+                    });
+                    break;
+
+                  case 'main-sidebar':
+                    if (numElements === 0) {
+                      newElements = [...currentElements];
+                      break;
+                    }
+                    const sidebarWidth = canvasWidth * 0.3;
+                    const mainWidth = canvasWidth - sidebarWidth - (padding * 3);
+
+                    newElements = currentElements.map((el, index) => {
+                      if (index === 0) { // Main element
+                        return {
+                          ...el,
+                          x: padding,
+                          y: padding,
+                          width: mainWidth,
+                          height: canvasHeight - (padding * 2),
+                        };
+                      } else { // Sidebar elements
+                        const sidebarElementsCount = numElements - 1;
+                        const sidebarElHeight = sidebarElementsCount > 0 ? (canvasHeight - (padding * (sidebarElementsCount + 1))) / sidebarElementsCount : 0;
+                        return {
+                          ...el,
+                          x: mainWidth + (padding * 2),
+                          y: padding + (index - 1) * (sidebarElHeight + padding),
+                          width: sidebarWidth,
+                          height: sidebarElHeight,
+                        };
+                      }
+                    });
+                    break;
+                  default:
+                    newElements = [...currentElements];
+                }
+                return newElements;
+            });
+            setIsApplyingLayout(false);
+          }, 50); // A small delay to ensure the DOM is ready
+
         } else if (droppedItemType === ItemTypes.ELEMENT) {
           const offset = monitor.getClientOffset();
           if (offset && canvasRef.current && item.icon) {
@@ -145,104 +240,6 @@ function Editor() {
   );
   
   drop(canvasRef);
-
-  useEffect(() => {
-    if (pendingLayout && canvasRef.current) {
-        const canvasWidth = canvasRef.current.offsetWidth;
-        const canvasHeight = canvasRef.current.offsetHeight;
-        const padding = 16;
-        const layoutType = pendingLayout;
-        
-        setCanvasElements(currentElements => {
-            if (currentElements.length === 0) {
-                return currentElements;
-            }
-
-            const numElements = currentElements.length;
-            let newElements: CanvasElement[];
-
-            switch (layoutType) {
-              case 'column':
-                const colHeight = (canvasHeight - (padding * (numElements + 1))) / numElements;
-                newElements = currentElements.map((el, index) => ({
-                  ...el,
-                  x: padding,
-                  y: padding + index * (colHeight + padding),
-                  width: canvasWidth - (padding * 2),
-                  height: colHeight,
-                }));
-                break;
-              
-              case 'row':
-                const rowWidth = (canvasWidth - (padding * (numElements + 1))) / numElements;
-                newElements = currentElements.map((el, index) => ({
-                  ...el,
-                  x: padding + index * (rowWidth + padding),
-                  y: padding,
-                  width: rowWidth,
-                  height: canvasHeight - (padding * 2),
-                }));
-                break;
-
-              case 'grid':
-                const cols = Math.ceil(Math.sqrt(numElements));
-                const rows = Math.ceil(numElements / cols);
-                const gridCellWidth = (canvasWidth - (padding * (cols + 1))) / cols;
-                const gridCellHeight = (canvasHeight - (padding * (rows + 1))) / rows;
-                
-                newElements = currentElements.map((el, index) => {
-                  const colIndex = index % cols;
-                  const rowIndex = Math.floor(index / cols);
-                  return {
-                    ...el,
-                    x: padding + colIndex * (gridCellWidth + padding),
-                    y: padding + rowIndex * (gridCellHeight + padding),
-                    width: gridCellWidth,
-                    height: gridCellHeight,
-                  };
-                });
-                break;
-
-              case 'main-sidebar':
-                if (numElements === 0) {
-                  newElements = [...currentElements];
-                  break;
-                }
-                const sidebarWidth = canvasWidth * 0.3;
-                const mainWidth = canvasWidth - sidebarWidth - (padding * 3);
-
-                newElements = currentElements.map((el, index) => {
-                  if (index === 0) { // Main element
-                    return {
-                      ...el,
-                      x: padding,
-                      y: padding,
-                      width: mainWidth,
-                      height: canvasHeight - (padding * 2),
-                    };
-                  } else { // Sidebar elements
-                    const sidebarElementsCount = numElements - 1;
-                    const sidebarElHeight = sidebarElementsCount > 0 ? (canvasHeight - (padding * (sidebarElementsCount + 1))) / sidebarElementsCount : 0;
-                    return {
-                      ...el,
-                      x: mainWidth + (padding * 2),
-                      y: padding + (index - 1) * (sidebarElHeight + padding),
-                      width: sidebarWidth,
-                      height: sidebarElHeight,
-                    };
-                  }
-                });
-                break;
-              default:
-                newElements = [...currentElements];
-            }
-            return newElements;
-        });
-
-        setPendingLayout(null);
-        setIsApplyingLayout(false);
-    }
-  }, [pendingLayout]);
 
   const handleDragStart = (e: React.MouseEvent, id: number, type: 'move' | 'resize') => {
     e.stopPropagation();
