@@ -31,6 +31,7 @@ import {
 import { DraggableElement, ItemTypes } from "./components/draggable-element";
 import PropertiesPanel from "./components/properties-panel";
 import { DraggableLayout } from "./components/draggable-layout";
+import { DraggableShape } from "./components/draggable-shape";
 
 const elements = [
   { icon: Type, label: "Text" },
@@ -88,6 +89,34 @@ function Editor() {
   }, []);
   
   const selectedElement = canvasElements.find(el => el.id === selectedElementId) || null;
+
+  const deleteSelectedElement = useCallback(() => {
+    if (!selectedElementId) return;
+    setCanvasElements(prev => prev.filter(el => el.id !== selectedElementId));
+    setSelectedElementId(null);
+  }, [selectedElementId]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (!selectedElementId) return;
+        
+        const activeEl = document.activeElement;
+        if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
+            return;
+        }
+        
+        if (e.key === 'Delete' || e.key === 'Backspace') {
+            e.preventDefault();
+            deleteSelectedElement();
+        }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedElementId, deleteSelectedElement]);
 
   const getDefaultProperties = useCallback((type: string) => {
     switch (type) {
@@ -223,30 +252,42 @@ function Editor() {
 
   const [{ isOver, canDrop, itemType }, drop] = useDrop(
     () => ({
-      accept: [ItemTypes.ELEMENT, ItemTypes.LAYOUT],
+      accept: [ItemTypes.ELEMENT, ItemTypes.LAYOUT, ItemTypes.SHAPE],
       drop: (item: { type: string; icon?: LucideIcon }, monitor) => {
         const droppedItemType = monitor.getItemType();
         const offset = monitor.getClientOffset();
         
         if (droppedItemType === ItemTypes.LAYOUT) {
           setPendingLayout(item.type);
-        } else if (droppedItemType === ItemTypes.ELEMENT) {
-          if (offset && canvasRef.current && item.icon) {
+        } else if (droppedItemType === ItemTypes.ELEMENT || droppedItemType === ItemTypes.SHAPE) {
+          if (offset && canvasRef.current) {
             const canvasBounds = canvasRef.current.getBoundingClientRect();
             const x = offset.x - canvasBounds.left;
             const y = offset.y - canvasBounds.top;
             
+            let elementType = item.type;
+            let elementIcon = item.icon;
+            
+            if (droppedItemType === ItemTypes.SHAPE) {
+              elementType = 'Shapes';
+              elementIcon = Shapes;
+            }
+            if(!elementIcon) return;
+            
             const newElement: CanvasElement = {
               id: Date.now(),
-              type: item.type,
-              icon: item.icon,
+              type: elementType,
+              icon: elementIcon,
               x: x - 100,
               y: y - 25,
               width: 200,
-              height: 50,
+              height: 100,
               rotation: 0,
-              properties: getDefaultProperties(item.type),
+              properties: getDefaultProperties(elementType),
             };
+            if(droppedItemType === ItemTypes.SHAPE) {
+                newElement.properties.shape = item.type;
+            }
             
             setCanvasElements((prev) => [...prev, newElement]);
             setSelectedElementId(newElement.id);
@@ -436,7 +477,7 @@ function Editor() {
   const getDropMessage = () => {
       if (isOver && canDrop) {
           if(itemType === ItemTypes.LAYOUT) return <p className="text-primary bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">Drop to apply layout</p>;
-          if(itemType === ItemTypes.ELEMENT) return <p className="text-accent-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">Drop to add element</p>;
+          if(itemType === ItemTypes.ELEMENT || itemType === ItemTypes.SHAPE) return <p className="text-accent-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">Drop to add element</p>;
       }
       if (canvasElements.length === 0) {
         return <p className="text-muted-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">Drop elements here</p>;
@@ -469,9 +510,19 @@ function Editor() {
             <div>
               <h2 className="text-md font-semibold mb-4">Elements</h2>
               <div className="grid grid-cols-2 gap-2">
-                {elements.map((el) => (
-                  <DraggableElement key={el.label} label={el.label} icon={el.icon} />
-                ))}
+                {elements.map((el) => {
+                  if (el.label === 'Shapes') return null;
+                  return <DraggableElement key={el.label} label={el.label} icon={el.icon} />
+                })}
+              </div>
+            </div>
+            <div>
+              <h2 className="text-md font-semibold mb-4">Shapes</h2>
+              <div className="grid grid-cols-2 gap-2">
+                <DraggableShape type="rectangle" name="Rectangle" />
+                <DraggableShape type="ellipse" name="Ellipse" />
+                <DraggableShape type="triangle" name="Triangle" />
+                <DraggableShape type="star" name="Star" />
               </div>
             </div>
              <div>
@@ -582,6 +633,7 @@ function Editor() {
           <PropertiesPanel
             element={selectedElement}
             onUpdate={updateElement}
+            onDelete={deleteSelectedElement}
           />
         </aside>
       </main>

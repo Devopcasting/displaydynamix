@@ -1,7 +1,10 @@
+
 'use client';
 import type { CanvasElement } from '../page';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Separator } from '@/components/ui/separator';
+import { Button } from '@/components/ui/button';
+import { Trash2 } from 'lucide-react';
 
 import CommonProperties from './properties/common-properties';
 import TextProperties from './properties/text-properties';
@@ -12,9 +15,10 @@ import MarqueeProperties from './properties/marquee-properties';
 interface PropertiesPanelProps {
     element: CanvasElement | null;
     onUpdate: (id: number, updates: Partial<CanvasElement>) => void;
+    onDelete: () => void;
 }
 
-export default function PropertiesPanel({ element, onUpdate }: PropertiesPanelProps) {
+export default function PropertiesPanel({ element, onUpdate, onDelete }: PropertiesPanelProps) {
     if (!element) {
         return (
             <div className="p-4 text-center text-muted-foreground py-10">
@@ -24,7 +28,7 @@ export default function PropertiesPanel({ element, onUpdate }: PropertiesPanelPr
     }
 
     const handleUpdateProperties = (updates: Partial<CanvasElement['properties']>) => {
-        onUpdate(element.id, { properties: updates });
+        onUpdate(element.id, { properties: { ...element.properties, ...updates } });
     };
 
     const handleUpdateElement = (updates: Partial<CanvasElement>) => {
@@ -47,7 +51,7 @@ export default function PropertiesPanel({ element, onUpdate }: PropertiesPanelPr
     }
 
     return (
-        <div className="space-y-4">
+        <div className="space-y-4 pb-4">
              <div className="p-4">
                 <h3 className="font-semibold text-lg mb-2">{element.type} Properties</h3>
                 <Separator />
@@ -66,6 +70,14 @@ export default function PropertiesPanel({ element, onUpdate }: PropertiesPanelPr
             
             <div className="px-4">
                 {renderElementProperties()}
+            </div>
+
+            <div className="px-4 pt-4 mt-auto">
+                <Separator />
+                <Button variant="destructive" className="w-full mt-4" onClick={onDelete}>
+                    <Trash2 className="mr-2" />
+                    Delete Element
+                </Button>
             </div>
         </div>
     );
