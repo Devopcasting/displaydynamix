@@ -31,26 +31,18 @@ import {
 import { DraggableElement, ItemTypes } from "./components/draggable-element";
 import PropertiesPanel from "./components/properties-panel";
 import { DraggableLayout } from "./components/draggable-layout";
-import { DraggableShape } from "./components/draggable-shape";
-
 
 const elements = [
   { icon: Type, label: "Text" },
   { icon: ImageIcon, label: "Image" },
   { icon: ScrollText, label: "Marquee" },
   { icon: Video, label: "Video" },
+  { icon: Shapes, label: "Shapes" },
   { icon: Clock, label: "Time/Date" },
   { icon: CloudSun, label: "Weather" },
   { icon: Rss, label: "RSS Feed" },
   { icon: Globe, label: "Webpage" },
   { icon: QrCode, label: "QR Code" },
-];
-
-const shapes = [
-  { name: "Rectangle", type: 'rectangle' as const },
-  { name: "Ellipse", type: 'ellipse' as const },
-  { name: "Triangle", type: 'triangle' as const },
-  { name: "Star", type: 'star' as const },
 ];
 
 const layouts = [
@@ -75,6 +67,7 @@ export interface CanvasElement {
 function Editor() {
   const [canvasElements, setCanvasElements] = useState<CanvasElement[]>([]);
   const [selectedElementId, setSelectedElementId] = useState<number | null>(null);
+  const [pendingLayout, setPendingLayout] = useState<string | null>(null);
   const [isApplyingLayout, setIsApplyingLayout] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
   const [dragInfo, setDragInfo] = useState<{
@@ -116,120 +109,127 @@ function Editor() {
     window.open('/preview', '_blank');
   };
 
+  useEffect(() => {
+    if (!pendingLayout) return;
+
+    setIsApplyingLayout(true);
+    
+    // Defer state update to allow UI to show spinner and for canvasRef to be up-to-date
+    setTimeout(() => {
+        setCanvasElements(currentElements => {
+            if (!canvasRef.current) {
+                return currentElements;
+            }
+            
+            let elementsToArrange = [...currentElements];
+            
+            if (elementsToArrange.length === 0) {
+                elementsToArrange = [
+                    { id: Date.now() + 1, type: 'Text', icon: Type, x: 0, y: 0, width: 200, height: 100, rotation: 0, properties: getDefaultProperties('Text')},
+                    { id: Date.now() + 2, type: 'Image', icon: ImageIcon, x: 0, y: 0, width: 200, height: 100, rotation: 0, properties: getDefaultProperties('Image')},
+                    { id: Date.now() + 3, type: 'Shapes', icon: Shapes, x: 0, y: 0, width: 200, height: 100, rotation: 0, properties: getDefaultProperties('Shapes')},
+                ];
+            }
+
+            const canvasWidth = canvasRef.current.offsetWidth;
+            const canvasHeight = canvasRef.current.offsetHeight;
+            const padding = 16;
+            
+            const numElements = elementsToArrange.length;
+            let newElements: CanvasElement[];
+
+            switch (pendingLayout) {
+                case 'column':
+                    const colHeight = (canvasHeight - (padding * (numElements + 1))) / numElements;
+                    newElements = elementsToArrange.map((el, index) => ({
+                        ...el,
+                        x: padding,
+                        y: padding + index * (colHeight + padding),
+                        width: canvasWidth - (padding * 2),
+                        height: colHeight,
+                    }));
+                    break;
+                
+                case 'row':
+                    const rowWidth = (canvasWidth - (padding * (numElements + 1))) / numElements;
+                    newElements = elementsToArrange.map((el, index) => ({
+                        ...el,
+                        x: padding + index * (rowWidth + padding),
+                        y: padding,
+                        width: rowWidth,
+                        height: canvasHeight - (padding * 2),
+                    }));
+                    break;
+
+                case 'grid':
+                    const cols = Math.ceil(Math.sqrt(numElements));
+                    const rows = Math.ceil(numElements / cols);
+                    const gridCellWidth = (canvasWidth - (padding * (cols + 1))) / cols;
+                    const gridCellHeight = (canvasHeight - (padding * (rows + 1))) / rows;
+                    
+                    newElements = elementsToArrange.map((el, index) => {
+                        const colIndex = index % cols;
+                        const rowIndex = Math.floor(index / cols);
+                        return {
+                            ...el,
+                            x: padding + colIndex * (gridCellWidth + padding),
+                            y: padding + rowIndex * (gridCellHeight + padding),
+                            width: gridCellWidth,
+                            height: gridCellHeight,
+                        };
+                    });
+                    break;
+
+                case 'main-sidebar':
+                    if (numElements === 0) {
+                        newElements = [...elementsToArrange];
+                        break;
+                    }
+                    const sidebarWidth = canvasWidth * 0.3;
+                    const mainWidth = canvasWidth - sidebarWidth - (padding * 3);
+
+                    newElements = elementsToArrange.map((el, index) => {
+                        if (index === 0) { // Main element
+                            return {
+                                ...el,
+                                x: padding,
+                                y: padding,
+                                width: mainWidth,
+                                height: canvasHeight - (padding * 2),
+                            };
+                        } else { // Sidebar elements
+                            const sidebarElementsCount = numElements - 1;
+                            const sidebarElHeight = sidebarElementsCount > 0 ? (canvasHeight - (padding * (sidebarElementsCount + 1))) / sidebarElementsCount : 0;
+                            return {
+                                ...el,
+                                x: mainWidth + (padding * 2),
+                                y: padding + (index - 1) * (sidebarElHeight + padding),
+                                width: sidebarWidth,
+                                height: sidebarElHeight,
+                            };
+                        }
+                    });
+                    break;
+                default:
+                    newElements = [...elementsToArrange];
+            }
+            return newElements;
+        });
+        setIsApplyingLayout(false);
+        setPendingLayout(null);
+    }, 50);
+
+  }, [pendingLayout, getDefaultProperties]);
+
   const [{ isOver, canDrop, itemType }, drop] = useDrop(
     () => ({
-      accept: [ItemTypes.ELEMENT, ItemTypes.LAYOUT, ItemTypes.SHAPE],
+      accept: [ItemTypes.ELEMENT, ItemTypes.LAYOUT],
       drop: (item: { type: string; icon?: LucideIcon }, monitor) => {
         const droppedItemType = monitor.getItemType();
         const offset = monitor.getClientOffset();
         
         if (droppedItemType === ItemTypes.LAYOUT) {
-          setIsApplyingLayout(true);
-          // Defer state update to allow UI to show spinner
-          setTimeout(() => {
-             setCanvasElements(currentElements => {
-              if (!canvasRef.current) {
-                return currentElements;
-              }
-
-              let elementsToArrange = [...currentElements];
-
-              if (elementsToArrange.length === 0) {
-                  elementsToArrange = [
-                      { id: Date.now() + 1, type: 'Text', icon: Type, x: 0, y: 0, width: 200, height: 100, rotation: 0, properties: getDefaultProperties('Text')},
-                      { id: Date.now() + 2, type: 'Image', icon: ImageIcon, x: 0, y: 0, width: 200, height: 100, rotation: 0, properties: getDefaultProperties('Image')},
-                      { id: Date.now() + 3, type: 'Shapes', icon: Shapes, x: 0, y: 0, width: 200, height: 100, rotation: 0, properties: getDefaultProperties('Shapes')},
-                  ];
-              }
-
-              const canvasWidth = canvasRef.current.offsetWidth;
-              const canvasHeight = canvasRef.current.offsetHeight;
-              const padding = 16;
-              const layoutType = item.type;
-              
-              const numElements = elementsToArrange.length;
-              let newElements: CanvasElement[];
-
-              switch (layoutType) {
-                case 'column':
-                  const colHeight = (canvasHeight - (padding * (numElements + 1))) / numElements;
-                  newElements = elementsToArrange.map((el, index) => ({
-                    ...el,
-                    x: padding,
-                    y: padding + index * (colHeight + padding),
-                    width: canvasWidth - (padding * 2),
-                    height: colHeight,
-                  }));
-                  break;
-                
-                case 'row':
-                  const rowWidth = (canvasWidth - (padding * (numElements + 1))) / numElements;
-                  newElements = elementsToArrange.map((el, index) => ({
-                    ...el,
-                    x: padding + index * (rowWidth + padding),
-                    y: padding,
-                    width: rowWidth,
-                    height: canvasHeight - (padding * 2),
-                  }));
-                  break;
-
-                case 'grid':
-                  const cols = Math.ceil(Math.sqrt(numElements));
-                  const rows = Math.ceil(numElements / cols);
-                  const gridCellWidth = (canvasWidth - (padding * (cols + 1))) / cols;
-                  const gridCellHeight = (canvasHeight - (padding * (rows + 1))) / rows;
-                  
-                  newElements = elementsToArrange.map((el, index) => {
-                    const colIndex = index % cols;
-                    const rowIndex = Math.floor(index / cols);
-                    return {
-                      ...el,
-                      x: padding + colIndex * (gridCellWidth + padding),
-                      y: padding + rowIndex * (gridCellHeight + padding),
-                      width: gridCellWidth,
-                      height: gridCellHeight,
-                    };
-                  });
-                  break;
-
-                case 'main-sidebar':
-                  if (numElements === 0) {
-                    newElements = [...elementsToArrange];
-                    break;
-                  }
-                  const sidebarWidth = canvasWidth * 0.3;
-                  const mainWidth = canvasWidth - sidebarWidth - (padding * 3);
-
-                  newElements = elementsToArrange.map((el, index) => {
-                    if (index === 0) { // Main element
-                      return {
-                        ...el,
-                        x: padding,
-                        y: padding,
-                        width: mainWidth,
-                        height: canvasHeight - (padding * 2),
-                      };
-                    } else { // Sidebar elements
-                      const sidebarElementsCount = numElements - 1;
-                      const sidebarElHeight = sidebarElementsCount > 0 ? (canvasHeight - (padding * (sidebarElementsCount + 1))) / sidebarElementsCount : 0;
-                      return {
-                        ...el,
-                        x: mainWidth + (padding * 2),
-                        y: padding + (index - 1) * (sidebarElHeight + padding),
-                        width: sidebarWidth,
-                        height: sidebarElHeight,
-                      };
-                    }
-                  });
-                  break;
-                default:
-                  newElements = [...elementsToArrange];
-              }
-              return newElements;
-            });
-            setIsApplyingLayout(false);
-          }, 50);
-
+          setPendingLayout(item.type);
         } else if (droppedItemType === ItemTypes.ELEMENT) {
           if (offset && canvasRef.current && item.icon) {
             const canvasBounds = canvasRef.current.getBoundingClientRect();
@@ -246,27 +246,6 @@ function Editor() {
               height: 50,
               rotation: 0,
               properties: getDefaultProperties(item.type),
-            };
-            
-            setCanvasElements((prev) => [...prev, newElement]);
-            setSelectedElementId(newElement.id);
-          }
-        } else if (droppedItemType === ItemTypes.SHAPE) {
-            if (offset && canvasRef.current) {
-            const canvasBounds = canvasRef.current.getBoundingClientRect();
-            const x = offset.x - canvasBounds.left;
-            const y = offset.y - canvasBounds.top;
-            
-            const newElement: CanvasElement = {
-              id: Date.now(),
-              type: 'Shapes',
-              icon: Shapes,
-              x: x - 50,
-              y: y - 50,
-              width: 100,
-              height: 100,
-              rotation: 0,
-              properties: { ...getDefaultProperties('Shapes'), shape: item.type },
             };
             
             setCanvasElements((prev) => [...prev, newElement]);
@@ -457,7 +436,7 @@ function Editor() {
   const getDropMessage = () => {
       if (isOver && canDrop) {
           if(itemType === ItemTypes.LAYOUT) return <p className="text-primary bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">Drop to apply layout</p>;
-          if(itemType === ItemTypes.ELEMENT || itemType === ItemTypes.SHAPE) return <p className="text-accent-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">Drop to add element</p>;
+          if(itemType === ItemTypes.ELEMENT) return <p className="text-accent-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">Drop to add element</p>;
       }
       if (canvasElements.length === 0) {
         return <p className="text-muted-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">Drop elements here</p>;
@@ -492,14 +471,6 @@ function Editor() {
               <div className="grid grid-cols-2 gap-2">
                 {elements.map((el) => (
                   <DraggableElement key={el.label} label={el.label} icon={el.icon} />
-                ))}
-              </div>
-            </div>
-             <div>
-              <h2 className="text-md font-semibold mb-4">Shapes</h2>
-              <div className="grid grid-cols-2 gap-2">
-                {shapes.map((shape) => (
-                  <DraggableShape key={shape.type} name={shape.name} type={shape.type} />
                 ))}
               </div>
             </div>
@@ -550,6 +521,7 @@ function Editor() {
                     {getDropMessage()}
                     {canvasElements.map((el) => {
                       const isSelected = selectedElementId === el.id;
+                      const showDottedBorder = !!pendingLayout;
                       return (
                         <div key={el.id}
                           onMouseDown={(e) => handleDragStart(e, el.id, 'move')}
@@ -557,10 +529,10 @@ function Editor() {
                           style={{ position: 'absolute', top: `${el.y}px`, left: `${el.x}px`, width: `${el.width}px`, height: `${el.height}px` }} 
                           className="cursor-grab"
                         >
-                          <div className="w-full h-full border-4 border-dotted border-black">
+                          <div className={`w-full h-full ${showDottedBorder ? 'border-4 border-dotted border-black' : ''}`}>
                             {renderElementContent(el)}
                           </div>
-                           {isSelected && (
+                           {isSelected && !showDottedBorder && (
                               <>
                                 <div className="absolute inset-0 border-2 border-primary pointer-events-none" />
                                 {/* Corner handles */}
