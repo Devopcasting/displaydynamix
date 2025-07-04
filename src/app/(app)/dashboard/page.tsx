@@ -31,6 +31,7 @@ import {
 import { DraggableElement, ItemTypes } from "./components/draggable-element";
 import PropertiesPanel from "./components/properties-panel";
 import { DraggableLayout } from "./components/draggable-layout";
+import { DraggableShape } from "./components/draggable-shape";
 
 
 const elements = [
@@ -38,12 +39,18 @@ const elements = [
   { icon: ImageIcon, label: "Image" },
   { icon: ScrollText, label: "Marquee" },
   { icon: Video, label: "Video" },
-  { icon: Shapes, label: "Shapes" },
   { icon: Clock, label: "Time/Date" },
   { icon: CloudSun, label: "Weather" },
   { icon: Rss, label: "RSS Feed" },
   { icon: Globe, label: "Webpage" },
   { icon: QrCode, label: "QR Code" },
+];
+
+const shapes = [
+  { name: "Rectangle", type: 'rectangle' as const },
+  { name: "Ellipse", type: 'ellipse' as const },
+  { name: "Triangle", type: 'triangle' as const },
+  { name: "Star", type: 'star' as const },
 ];
 
 const layouts = [
@@ -111,9 +118,10 @@ function Editor() {
 
   const [{ isOver, canDrop, itemType }, drop] = useDrop(
     () => ({
-      accept: [ItemTypes.ELEMENT, ItemTypes.LAYOUT],
+      accept: [ItemTypes.ELEMENT, ItemTypes.LAYOUT, ItemTypes.SHAPE],
       drop: (item: { type: string; icon?: LucideIcon }, monitor) => {
         const droppedItemType = monitor.getItemType();
+        const offset = monitor.getClientOffset();
         
         if (droppedItemType === ItemTypes.LAYOUT) {
           setIsApplyingLayout(true);
@@ -223,7 +231,6 @@ function Editor() {
           }, 50);
 
         } else if (droppedItemType === ItemTypes.ELEMENT) {
-          const offset = monitor.getClientOffset();
           if (offset && canvasRef.current && item.icon) {
             const canvasBounds = canvasRef.current.getBoundingClientRect();
             const x = offset.x - canvasBounds.left;
@@ -239,6 +246,27 @@ function Editor() {
               height: 50,
               rotation: 0,
               properties: getDefaultProperties(item.type),
+            };
+            
+            setCanvasElements((prev) => [...prev, newElement]);
+            setSelectedElementId(newElement.id);
+          }
+        } else if (droppedItemType === ItemTypes.SHAPE) {
+            if (offset && canvasRef.current) {
+            const canvasBounds = canvasRef.current.getBoundingClientRect();
+            const x = offset.x - canvasBounds.left;
+            const y = offset.y - canvasBounds.top;
+            
+            const newElement: CanvasElement = {
+              id: Date.now(),
+              type: 'Shapes',
+              icon: Shapes,
+              x: x - 50,
+              y: y - 50,
+              width: 100,
+              height: 100,
+              rotation: 0,
+              properties: { ...getDefaultProperties('Shapes'), shape: item.type },
             };
             
             setCanvasElements((prev) => [...prev, newElement]);
@@ -429,7 +457,7 @@ function Editor() {
   const getDropMessage = () => {
       if (isOver && canDrop) {
           if(itemType === ItemTypes.LAYOUT) return <p className="text-primary bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">Drop to apply layout</p>;
-          if(itemType === ItemTypes.ELEMENT) return <p className="text-accent-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">Drop to add element</p>;
+          if(itemType === ItemTypes.ELEMENT || itemType === ItemTypes.SHAPE) return <p className="text-accent-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">Drop to add element</p>;
       }
       if (canvasElements.length === 0) {
         return <p className="text-muted-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">Drop elements here</p>;
@@ -464,6 +492,14 @@ function Editor() {
               <div className="grid grid-cols-2 gap-2">
                 {elements.map((el) => (
                   <DraggableElement key={el.label} label={el.label} icon={el.icon} />
+                ))}
+              </div>
+            </div>
+             <div>
+              <h2 className="text-md font-semibold mb-4">Shapes</h2>
+              <div className="grid grid-cols-2 gap-2">
+                {shapes.map((shape) => (
+                  <DraggableShape key={shape.type} name={shape.name} type={shape.type} />
                 ))}
               </div>
             </div>
