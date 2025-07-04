@@ -16,7 +16,7 @@ export interface DraggableElementProps {
 export const DraggableElement: FC<DraggableElementProps> = ({ icon: Icon, label }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: ItemTypes.ELEMENT,
-    item: { label, icon: Icon },
+    item: { type: label, icon: Icon },
     collect: (monitor) => ({
       isDragging: !!monitor.isDragging(),
     }),
