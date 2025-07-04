@@ -31,7 +31,6 @@ import {
 import { DraggableElement, ItemTypes } from "./components/draggable-element";
 import PropertiesPanel from "./components/properties-panel";
 import { DraggableLayout } from "./components/draggable-layout";
-import { DraggableShape } from "./components/draggable-shape";
 
 const elements = [
   { icon: Type, label: "Text" },
@@ -259,19 +258,15 @@ function Editor() {
         
         if (droppedItemType === ItemTypes.LAYOUT) {
           setPendingLayout(item.type);
-        } else if (droppedItemType === ItemTypes.ELEMENT || droppedItemType === ItemTypes.SHAPE) {
+        } else if (droppedItemType === ItemTypes.ELEMENT) {
           if (offset && canvasRef.current) {
             const canvasBounds = canvasRef.current.getBoundingClientRect();
             const x = offset.x - canvasBounds.left;
             const y = offset.y - canvasBounds.top;
             
-            let elementType = item.type;
-            let elementIcon = item.icon;
+            const elementType = item.type;
+            const elementIcon = item.icon;
             
-            if (droppedItemType === ItemTypes.SHAPE) {
-              elementType = 'Shapes';
-              elementIcon = Shapes;
-            }
             if(!elementIcon) return;
             
             const newElement: CanvasElement = {
@@ -285,9 +280,6 @@ function Editor() {
               rotation: 0,
               properties: getDefaultProperties(elementType),
             };
-            if(droppedItemType === ItemTypes.SHAPE) {
-                newElement.properties.shape = item.type;
-            }
             
             setCanvasElements((prev) => [...prev, newElement]);
             setSelectedElementId(newElement.id);
@@ -297,7 +289,7 @@ function Editor() {
       collect: (monitor) => ({ 
         isOver: !!monitor.isOver(),
         canDrop: !!monitor.canDrop(),
-        itemType: monitor.getItemType()
+        itemType: monitor.getItemType()?.toString()
       }),
     }),
     [getDefaultProperties, canvasElements]
@@ -477,7 +469,7 @@ function Editor() {
   const getDropMessage = () => {
       if (isOver && canDrop) {
           if(itemType === ItemTypes.LAYOUT) return <p className="text-primary bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">Drop to apply layout</p>;
-          if(itemType === ItemTypes.ELEMENT || itemType === ItemTypes.SHAPE) return <p className="text-accent-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">Drop to add element</p>;
+          if(itemType === ItemTypes.ELEMENT) return <p className="text-accent-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">Drop to add element</p>;
       }
       if (canvasElements.length === 0) {
         return <p className="text-muted-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">Drop elements here</p>;
@@ -511,20 +503,11 @@ function Editor() {
               <h2 className="text-md font-semibold mb-4">Elements</h2>
               <div className="grid grid-cols-2 gap-2">
                 {elements.map((el) => {
-                  if (el.label === 'Shapes') return null;
                   return <DraggableElement key={el.label} label={el.label} icon={el.icon} />
                 })}
               </div>
             </div>
-            <div>
-              <h2 className="text-md font-semibold mb-4">Shapes</h2>
-              <div className="grid grid-cols-2 gap-2">
-                <DraggableShape type="rectangle" name="Rectangle" />
-                <DraggableShape type="ellipse" name="Ellipse" />
-                <DraggableShape type="triangle" name="Triangle" />
-                <DraggableShape type="star" name="Star" />
-              </div>
-            </div>
+            
              <div>
                 <h2 className="text-md font-semibold mb-4">Layouts</h2>
                 <p className="text-xs text-muted-foreground mb-2">Drag a layout onto the canvas to apply it.</p>
