@@ -26,6 +26,7 @@ import {
   ZoomOut,
   LucideIcon,
   Loader2,
+  RotateCcw,
 } from "lucide-react";
 import AiLayoutSuggestions from "./components/ai-layout-suggestions";
 import { DraggableElement, ItemTypes } from "./components/draggable-element";
@@ -80,11 +81,11 @@ function Editor() {
     elementStartHeight: number;
   } | null>(null);
 
-  const updateElement = useCallback((id: number, updates: Partial<CanvasElement>) => {
+  const updateElement = (id: number, updates: Partial<CanvasElement>) => {
     setCanvasElements(prev =>
       prev.map(el => (el.id === id ? { ...el, ...updates, properties: { ...el.properties, ...(updates.properties || {}) } } : el))
     );
-  }, []);
+  };
   
   const selectedElement = canvasElements.find(el => el.id === selectedElementId) || null;
 
@@ -109,6 +110,7 @@ function Editor() {
         
         if (droppedItemType === ItemTypes.LAYOUT) {
           setIsApplyingLayout(true);
+          // Defer state update to allow UI to show spinner
           setTimeout(() => {
             if (!canvasRef.current) {
               setIsApplyingLayout(false);
@@ -244,7 +246,7 @@ function Editor() {
         itemType: monitor.getItemType()
       }),
     }),
-    [getDefaultProperties]
+    [getDefaultProperties, canvasElements]
   );
   
   drop(canvasRef);
@@ -367,6 +369,10 @@ function Editor() {
       <header className="flex items-center justify-between h-14 px-4 border-b bg-background">
         <h1 className="text-lg font-semibold">Untitled Template</h1>
         <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => { setCanvasElements([]); setSelectedElementId(null); }}>
+            <RotateCcw className="mr-2" />
+            Reset
+          </Button>
           <Button variant="outline" size="sm">
             <Eye className="mr-2" />
             Preview
