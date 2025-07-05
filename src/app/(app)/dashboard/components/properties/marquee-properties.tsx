@@ -3,6 +3,7 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import type { CanvasElement } from '../../../page';
 
 interface MarqueePropertiesProps {
@@ -26,6 +27,18 @@ export default function MarqueeProperties({ properties, onUpdate }: MarqueePrope
                     <Label>Color</Label>
                     <Input type="color" value={properties.color || '#000000'} onChange={e => onUpdate({ color: e.target.value })} className="h-10" />
                 </div>
+            </div>
+            <div>
+                <Label>Direction</Label>
+                <Select value={properties.direction || 'rtl'} onValueChange={value => onUpdate({ direction: value })}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select direction" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="rtl">Right to Left</SelectItem>
+                        <SelectItem value="ltr">Left to Right</SelectItem>
+                    </SelectContent>
+                </Select>
             </div>
             <div>
                 <Label>Speed ({properties.speed || 5})</Label>

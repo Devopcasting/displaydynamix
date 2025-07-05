@@ -32,12 +32,17 @@ const renderElementContent = (element: PreviewElement) => {
         return <img src={properties.src} data-ai-hint="placeholder image" alt="preview" style={{ ...style, objectFit: properties.objectFit || 'cover' }} />;
       case 'Marquee':
         const animationDuration = 20 / (properties.speed || 5);
+        const animationName = properties.direction === 'ltr' ? 'marqueeAnimationLtr' : 'marqueeAnimationRtl';
         return (
           <div style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center' }}>
             <style>{`
-              @keyframes marqueeAnimation {
+              @keyframes marqueeAnimationRtl {
                 0% { transform: translateX(100%); }
                 100% { transform: translateX(-100%); }
+              }
+              @keyframes marqueeAnimationLtr {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(100%); }
               }
             `}</style>
             <div
@@ -46,7 +51,7 @@ const renderElementContent = (element: PreviewElement) => {
                 whiteSpace: 'nowrap',
                 color: properties.color,
                 fontSize: properties.fontSize,
-                animation: `marqueeAnimation ${animationDuration}s linear infinite`,
+                animation: `${animationName} ${animationDuration}s linear infinite`,
               }}
             >
               {properties.content}

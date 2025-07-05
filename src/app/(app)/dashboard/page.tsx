@@ -136,7 +136,7 @@ function Editor() {
       case 'Image':
         return { src: 'https://placehold.co/300x200.png', objectFit: 'cover' };
       case 'Marquee':
-        return { content: 'Scrolling text...', fontSize: 24, color: '#000000', speed: 5 };
+        return { content: 'Scrolling text...', fontSize: 24, color: '#000000', speed: 5, direction: 'rtl' };
       case 'Shapes':
         return { shape: 'rectangle', color: 'hsl(var(--primary))' };
       default:
@@ -418,12 +418,17 @@ function Editor() {
         return <img src={properties.src} alt="" style={{ ...style, objectFit: properties.objectFit || 'cover' }} />;
       case 'Marquee':
         const animationDuration = 20 / (properties.speed || 5);
+        const animationName = properties.direction === 'ltr' ? 'marqueeAnimationLtr' : 'marqueeAnimationRtl';
         return (
           <div style={{ width: '100%', height: '100%', overflow: 'hidden', position: 'relative', display: 'flex', alignItems: 'center' }}>
             <style>{`
-              @keyframes marqueeAnimation {
+              @keyframes marqueeAnimationRtl {
                 0% { transform: translateX(100%); }
                 100% { transform: translateX(-100%); }
+              }
+              @keyframes marqueeAnimationLtr {
+                0% { transform: translateX(-100%); }
+                100% { transform: translateX(100%); }
               }
             `}</style>
             <div
@@ -432,7 +437,7 @@ function Editor() {
                 whiteSpace: 'nowrap',
                 color: properties.color,
                 fontSize: properties.fontSize,
-                animation: `marqueeAnimation ${animationDuration}s linear infinite`,
+                animation: `${animationName} ${animationDuration}s linear infinite`,
               }}
             >
               {properties.content}
