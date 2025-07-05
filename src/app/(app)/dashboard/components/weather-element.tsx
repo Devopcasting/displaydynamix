@@ -29,6 +29,7 @@ export default function WeatherElement({ properties }: WeatherElementProps) {
         if (!location || !apiKey) {
             setError(apiKey ? 'Please provide a location.' : 'WeatherAPI key is not set.');
             setLoading(false);
+            setWeather(null);
             return;
         }
 
