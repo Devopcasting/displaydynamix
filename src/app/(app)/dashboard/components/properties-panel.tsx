@@ -11,6 +11,7 @@ import TextProperties from './properties/text-properties';
 import ImageProperties from './properties/image-properties';
 import ShapeProperties from './properties/shape-properties';
 import MarqueeProperties from './properties/marquee-properties';
+import WeatherProperties from './properties/weather-properties';
 
 interface PropertiesPanelProps {
     element: CanvasElement | null;
@@ -55,6 +56,8 @@ export default function PropertiesPanel({ element, onUpdate, onDelete, isReadOnl
                 return <ShapeProperties properties={element.properties} onUpdate={handleUpdateProperties} />;
             case 'Marquee':
                 return <MarqueeProperties properties={element.properties} onUpdate={handleUpdateProperties} />;
+            case 'Weather':
+                return <WeatherProperties properties={element.properties} onUpdate={handleUpdateProperties} />;
             default:
                 return <p className="p-4 text-sm text-muted-foreground">No specific properties for this element.</p>;
         }

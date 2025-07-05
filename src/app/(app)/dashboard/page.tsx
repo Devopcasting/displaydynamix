@@ -33,6 +33,7 @@ import { DraggableElement, ItemTypes } from "./components/draggable-element";
 import PropertiesPanel from "./components/properties-panel";
 import { DraggableLayout } from "./components/draggable-layout";
 import { DraggableShape } from "./components/draggable-shape";
+import WeatherElement from "./components/weather-element";
 
 const elements = [
   { icon: Type, label: "Text" },
@@ -139,6 +140,8 @@ function Editor() {
         return { content: 'Scrolling text...', fontSize: 24, color: '#000000', speed: 5, direction: 'rtl' };
       case 'Shapes':
         return { shape: 'rectangle', color: 'hsl(var(--primary))' };
+      case 'Weather':
+        return { location: 'London', units: 'metric' };
       default:
         return {};
     }
@@ -467,6 +470,8 @@ function Editor() {
           );
         }
         return <div style={{ ...style, backgroundColor: properties.color }} />;
+      case 'Weather':
+        return <WeatherElement properties={properties} />;
       default:
         const ElementIcon = element.icon;
         return (
