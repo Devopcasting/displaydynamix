@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Sun, Cloud, CloudRain, CloudSnow, CloudLightning, Loader2, AlertCircle } from 'lucide-react';
+import Image from 'next/image';
+import { Loader2, AlertCircle } from 'lucide-react';
 import type { CanvasElement } from '../page';
 
 interface WeatherElementProps {
@@ -9,28 +10,12 @@ interface WeatherElementProps {
 }
 
 interface WeatherData {
-    temp: number;
+    temp_c: number;
+    temp_f: number;
     description: string;
-    icon: string;
+    iconUrl: string;
     city: string;
 }
-
-const WeatherIcon = ({ iconCode }: { iconCode: string }) => {
-    const iconMapping: { [key: string]: React.ElementType } = {
-        '01': Sun, // clear sky
-        '02': Cloud, // few clouds
-        '03': Cloud, // scattered clouds
-        '04': Cloud, // broken clouds
-        '09': CloudRain, // shower rain
-        '10': CloudRain, // rain
-        '11': CloudLightning, // thunderstorm
-        '13': CloudSnow, // snow
-        '50': Cloud, // mist
-    };
-    const IconComponent = iconMapping[iconCode.slice(0, 2)] || Sun;
-    return <IconComponent className="w-16 h-16" />;
-};
-
 
 export default function WeatherElement({ properties }: WeatherElementProps) {
     const [weather, setWeather] = useState<WeatherData | null>(null);
@@ -38,11 +23,11 @@ export default function WeatherElement({ properties }: WeatherElementProps) {
     const [error, setError] = useState<string | null>(null);
 
     const { location, units } = properties;
-    const apiKey = process.env.NEXT_PUBLIC_OPENWEATHER_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_WEATHERAPI_KEY;
 
     useEffect(() => {
         if (!location || !apiKey) {
-            setError(apiKey ? 'Please provide a location.' : 'OpenWeather API key is not set.');
+            setError(apiKey ? 'Please provide a location.' : 'WeatherAPI key is not set.');
             setLoading(false);
             return;
         }
@@ -53,17 +38,18 @@ export default function WeatherElement({ properties }: WeatherElementProps) {
 
         const fetchWeather = async () => {
             try {
-                const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${location}&units=${units}&appid=${apiKey}`);
+                const response = await fetch(`https://api.weatherapi.com/v1/current.json?key=${apiKey}&q=${location}`);
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.message || `Error: ${response.status}`);
+                    throw new Error(errorData.error?.message || `Error: ${response.status}`);
                 }
                 const data = await response.json();
                 setWeather({
-                    temp: Math.round(data.main.temp),
-                    description: data.weather[0].description,
-                    icon: data.weather[0].icon,
-                    city: data.name,
+                    temp_c: Math.round(data.current.temp_c),
+                    temp_f: Math.round(data.current.temp_f),
+                    description: data.current.condition.text,
+                    iconUrl: data.current.condition.icon,
+                    city: data.location.name,
                 });
             } catch (e) {
                 setError(e instanceof Error ? e.message : 'Failed to fetch weather data.');
@@ -75,7 +61,7 @@ export default function WeatherElement({ properties }: WeatherElementProps) {
         const timer = setTimeout(fetchWeather, 500); // Debounce API calls
         return () => clearTimeout(timer);
 
-    }, [location, units, apiKey]);
+    }, [location, apiKey]);
     
     if (loading) {
         return (
@@ -100,12 +86,14 @@ export default function WeatherElement({ properties }: WeatherElementProps) {
         return null;
     }
 
-    const tempUnit = units === 'metric' ? 'C' : 'F';
+    const isMetric = units === 'metric';
+    const temp = isMetric ? weather.temp_c : weather.temp_f;
+    const tempUnit = isMetric ? 'C' : 'F';
 
     return (
         <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center text-foreground">
-            <WeatherIcon iconCode={weather.icon} />
-            <p className="text-4xl font-bold mt-2">{weather.temp}°{tempUnit}</p>
+            <Image src={`https:${weather.iconUrl}`} alt={weather.description} width={64} height={64} />
+            <p className="text-4xl font-bold mt-2">{temp}°{tempUnit}</p>
             <p className="text-lg capitalize">{weather.description}</p>
             <p className="text-md text-muted-foreground">{weather.city}</p>
         </div>
