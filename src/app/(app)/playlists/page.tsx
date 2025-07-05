@@ -1,7 +1,9 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { MoreVertical, Plus, Play, Clock } from "lucide-react";
-import Image from "next/image";
+import { useAuth } from "@/components/auth-provider";
 
 const playlists = [
   { title: "Morning Lobby Playlist", items: 5, duration: "10m" },
@@ -11,14 +13,19 @@ const playlists = [
 ];
 
 export default function PlaylistsPage() {
+  const { user } = useAuth();
+  const canEdit = user?.role === 'Admin' || user?.role === 'Editor';
+
   return (
     <div className="h-full flex flex-col">
       <header className="flex items-center justify-between h-14 px-4 sm:px-6 border-b bg-background">
         <h1 className="text-lg font-semibold">Playlists</h1>
-        <Button>
-          <Plus className="mr-2" />
-          New Playlist
-        </Button>
+        {canEdit && (
+          <Button>
+            <Plus className="mr-2" />
+            New Playlist
+          </Button>
+        )}
       </header>
       <main className="flex-1 overflow-auto p-4 sm:p-6">
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
@@ -27,9 +34,11 @@ export default function PlaylistsPage() {
               <CardHeader>
                 <div className="flex justify-between items-start">
                   <CardTitle>{playlist.title}</CardTitle>
-                  <Button variant="ghost" size="icon" className="w-8 h-8 -mt-2 -mr-2">
-                    <MoreVertical className="w-4 h-4" />
-                  </Button>
+                  {canEdit && (
+                    <Button variant="ghost" size="icon" className="w-8 h-8 -mt-2 -mr-2">
+                      <MoreVertical className="w-4 h-4" />
+                    </Button>
+                  )}
                 </div>
                 <CardDescription className="flex items-center gap-4 pt-1">
                   <span className="flex items-center gap-1">
@@ -48,7 +57,9 @@ export default function PlaylistsPage() {
                 </div>
               </CardContent>
               <CardFooter>
-                 <Button variant="outline" className="w-full">Edit Playlist</Button>
+                 <Button variant={canEdit ? "outline" : "secondary"} className="w-full" disabled={!canEdit}>
+                    {canEdit ? "Edit Playlist" : "View Playlist"}
+                 </Button>
               </CardFooter>
             </Card>
           ))}

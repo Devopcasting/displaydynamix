@@ -5,6 +5,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useDrop } from 'react-dnd';
+import { useAuth } from "@/components/auth-provider";
 import { Button } from "@/components/ui/button";
 import {
   Type,
@@ -31,18 +32,25 @@ import {
 import { DraggableElement, ItemTypes } from "./components/draggable-element";
 import PropertiesPanel from "./components/properties-panel";
 import { DraggableLayout } from "./components/draggable-layout";
+import { DraggableShape } from "./components/draggable-shape";
 
 const elements = [
   { icon: Type, label: "Text" },
   { icon: ImageIcon, label: "Image" },
   { icon: ScrollText, label: "Marquee" },
   { icon: Video, label: "Video" },
-  { icon: Shapes, label: "Shapes" },
   { icon: Clock, label: "Time/Date" },
   { icon: CloudSun, label: "Weather" },
   { icon: Rss, label: "RSS Feed" },
   { icon: Globe, label: "Webpage" },
   { icon: QrCode, label: "QR Code" },
+];
+
+const shapes = [
+  { name: "Rectangle", type: 'rectangle' as const },
+  { name: "Ellipse", type: 'ellipse' as const },
+  { name: "Triangle", type: 'triangle' as const },
+  { name: "Star", type: 'star' as const },
 ];
 
 const layouts = [
@@ -65,6 +73,9 @@ export interface CanvasElement {
 }
 
 function Editor() {
+  const { user } = useAuth();
+  const isReadOnly = user?.role === 'Viewer';
+
   const [canvasElements, setCanvasElements] = useState<CanvasElement[]>([]);
   const [selectedElementId, setSelectedElementId] = useState<number | null>(null);
   const [pendingLayout, setPendingLayout] = useState<string | null>(null);
@@ -82,22 +93,23 @@ function Editor() {
   } | null>(null);
 
   const updateElement = useCallback((id: number, updates: Partial<CanvasElement>) => {
+    if (isReadOnly) return;
     setCanvasElements(prev =>
       prev.map(el => (el.id === id ? { ...el, ...updates, properties: { ...el.properties, ...(updates.properties || {}) } } : el))
     );
-  }, []);
+  }, [isReadOnly]);
   
   const selectedElement = canvasElements.find(el => el.id === selectedElementId) || null;
 
   const deleteSelectedElement = useCallback(() => {
-    if (!selectedElementId) return;
+    if (isReadOnly || !selectedElementId) return;
     setCanvasElements(prev => prev.filter(el => el.id !== selectedElementId));
     setSelectedElementId(null);
-  }, [selectedElementId]);
+  }, [selectedElementId, isReadOnly]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-        if (!selectedElementId) return;
+        if (isReadOnly || !selectedElementId) return;
         
         const activeEl = document.activeElement;
         if (activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA')) {
@@ -115,7 +127,7 @@ function Editor() {
     return () => {
         window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [selectedElementId, deleteSelectedElement]);
+  }, [selectedElementId, deleteSelectedElement, isReadOnly]);
 
   const getDefaultProperties = useCallback((type: string) => {
     switch (type) {
@@ -142,7 +154,6 @@ function Editor() {
 
     setIsApplyingLayout(true);
     
-    // Defer state update to allow UI to show spinner and for canvasRef to be up-to-date
     setTimeout(() => {
         setCanvasElements(currentElements => {
             if (!canvasRef.current) {
@@ -252,20 +263,22 @@ function Editor() {
   const [{ isOver, canDrop, itemType }, drop] = useDrop(
     () => ({
       accept: [ItemTypes.ELEMENT, ItemTypes.LAYOUT, ItemTypes.SHAPE],
+      canDrop: () => !isReadOnly,
       drop: (item: { type: string; icon?: LucideIcon }, monitor) => {
+        if (isReadOnly) return;
         const droppedItemType = monitor.getItemType();
         const offset = monitor.getClientOffset();
         
         if (droppedItemType === ItemTypes.LAYOUT) {
           setPendingLayout(item.type);
-        } else if (droppedItemType === ItemTypes.ELEMENT) {
+        } else if (droppedItemType === ItemTypes.ELEMENT || droppedItemType === ItemTypes.SHAPE) {
           if (offset && canvasRef.current) {
             const canvasBounds = canvasRef.current.getBoundingClientRect();
             const x = offset.x - canvasBounds.left;
             const y = offset.y - canvasBounds.top;
             
-            const elementType = item.type;
-            const elementIcon = item.icon;
+            const elementType = droppedItemType === ItemTypes.SHAPE ? 'Shapes' : item.type;
+            const elementIcon = droppedItemType === ItemTypes.SHAPE ? Shapes : item.icon;
             
             if(!elementIcon) return;
             
@@ -280,6 +293,9 @@ function Editor() {
               rotation: 0,
               properties: getDefaultProperties(elementType),
             };
+            if(droppedItemType === ItemTypes.SHAPE){
+                newElement.properties.shape = item.type;
+            }
             
             setCanvasElements((prev) => [...prev, newElement]);
             setSelectedElementId(newElement.id);
@@ -292,12 +308,13 @@ function Editor() {
         itemType: monitor.getItemType()?.toString()
       }),
     }),
-    [getDefaultProperties, canvasElements]
+    [getDefaultProperties, isReadOnly]
   );
   
   drop(canvasRef);
 
   const handleDragStart = (e: React.MouseEvent, id: number, type: string) => {
+    if (isReadOnly) return;
     e.stopPropagation();
     e.preventDefault();
     const element = canvasElements.find(el => el.id === id);
@@ -317,7 +334,7 @@ function Editor() {
   };
 
   const handleMouseMove = useCallback((e: MouseEvent) => {
-      if (!dragInfo) return;
+      if (!dragInfo || isReadOnly) return;
       
       const dx = e.clientX - dragInfo.startX;
       const dy = e.clientY - dragInfo.startY;
@@ -352,7 +369,7 @@ function Editor() {
         }
         updateElement(dragInfo.id, { x, y, width, height });
       }
-    }, [dragInfo, updateElement]);
+    }, [dragInfo, updateElement, isReadOnly]);
 
     const handleMouseUp = useCallback(() => {
       setDragInfo(null);
@@ -469,9 +486,9 @@ function Editor() {
   const getDropMessage = () => {
       if (isOver && canDrop) {
           if(itemType === ItemTypes.LAYOUT) return <p className="text-primary bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">Drop to apply layout</p>;
-          if(itemType === ItemTypes.ELEMENT) return <p className="text-accent-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">Drop to add element</p>;
+          if(itemType === ItemTypes.ELEMENT || itemType === ItemTypes.SHAPE) return <p className="text-accent-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10">Drop to add element</p>;
       }
-      if (canvasElements.length === 0) {
+      if (canvasElements.length === 0 && !isReadOnly) {
         return <p className="text-muted-foreground bg-background px-2 rounded-sm absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">Drop elements here</p>;
       }
       return null;
@@ -482,7 +499,7 @@ function Editor() {
       <header className="flex items-center justify-between h-14 px-4 border-b bg-background">
         <h1 className="text-lg font-semibold">Untitled Template</h1>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => { setCanvasElements([]); setSelectedElementId(null); }}>
+          <Button variant="outline" size="sm" onClick={() => { setCanvasElements([]); setSelectedElementId(null); }} disabled={isReadOnly}>
             <RotateCcw className="mr-2" />
             Reset
           </Button>
@@ -490,7 +507,7 @@ function Editor() {
             <Eye className="mr-2" />
             Preview
           </Button>
-          <Button size="sm">
+          <Button size="sm" disabled={isReadOnly}>
             <Save className="mr-2" />
             Save
           </Button>
@@ -502,18 +519,18 @@ function Editor() {
             <div>
               <h2 className="text-md font-semibold mb-4">Elements</h2>
               <div className="grid grid-cols-2 gap-2">
-                {elements.map((el) => {
-                  return <DraggableElement key={el.label} label={el.label} icon={el.icon} />
+                <DraggableElement label="Shapes" icon={Shapes} disabled={isReadOnly} />
+                {elements.filter(el => el.label !== 'Shapes').map((el) => {
+                  return <DraggableElement key={el.label} label={el.label} icon={el.icon} disabled={isReadOnly} />
                 })}
               </div>
             </div>
-            
              <div>
                 <h2 className="text-md font-semibold mb-4">Layouts</h2>
                 <p className="text-xs text-muted-foreground mb-2">Drag a layout onto the canvas to apply it.</p>
                 <div className="grid grid-cols-2 gap-2">
                     {layouts.map((layout) => (
-                        <DraggableLayout key={layout.type} name={layout.name} type={layout.type} />
+                        <DraggableLayout key={layout.type} name={layout.name} type={layout.type} disabled={isReadOnly} />
                     ))}
                 </div>
             </div>
@@ -543,7 +560,7 @@ function Editor() {
                     <Button variant="ghost" size="icon"><ZoomIn/></Button>
                     <Button variant="ghost" size="icon"><ZoomOut/></Button>
                 </div>
-                <div ref={canvasRef} className="w-[80%] h-[80%] border-2 border-dashed relative bg-[linear-gradient(to_right,theme(colors.border)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.border)_1px,transparent_1px)] bg-[size:2rem_2rem]" style={{ backgroundColor: getCanvasBgColor(), transition: 'background-color 0.2s' }}
+                <div ref={canvasRef} className="w-[80%] h-[80%] border-2 border-dashed relative bg-[linear-gradient(to_right,theme(colors.border)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.border)_1px,transparent_1px)] bg-[size:2rem_2rem]" style={{ backgroundColor: getCanvasBgColor(), transition: 'background-color 0.2s', cursor: isReadOnly ? 'default' : 'auto' }}
                   onClick={() => setSelectedElementId(null)}
                 >
                     {isApplyingLayout && (
@@ -558,15 +575,15 @@ function Editor() {
                       const showDottedBorder = !!pendingLayout;
                       return (
                         <div key={el.id}
-                          onMouseDown={(e) => handleDragStart(e, el.id, 'move')}
+                          onMouseDown={(e) => !isReadOnly && handleDragStart(e, el.id, 'move')}
                           onClick={(e) => { e.stopPropagation(); setSelectedElementId(el.id)}}
                           style={{ position: 'absolute', top: `${el.y}px`, left: `${el.x}px`, width: `${el.width}px`, height: `${el.height}px` }} 
-                          className="cursor-grab"
+                          className={!isReadOnly ? "cursor-grab" : "cursor-default"}
                         >
                           <div className={`w-full h-full ${showDottedBorder ? 'border-4 border-dotted border-black' : ''}`}>
                             {renderElementContent(el)}
                           </div>
-                           {isSelected && !showDottedBorder && (
+                           {isSelected && !showDottedBorder && !isReadOnly && (
                               <>
                                 <div className="absolute inset-0 border-2 border-primary pointer-events-none" />
                                 {/* Corner handles */}
@@ -617,6 +634,7 @@ function Editor() {
             element={selectedElement}
             onUpdate={updateElement}
             onDelete={deleteSelectedElement}
+            isReadOnly={isReadOnly}
           />
         </aside>
       </main>

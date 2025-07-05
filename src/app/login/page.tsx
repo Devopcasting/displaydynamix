@@ -48,7 +48,9 @@ export default function LoginPage() {
             Display Dynamix
           </CardTitle>
           <CardDescription>
-            Enter your credentials to access the studio
+            Enter your credentials to access the studio.
+            <br />
+            (try viewer/viewer or editor/editor)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -70,6 +72,7 @@ export default function LoginPage() {
                 <Input
                   id="password"
                   type="password"
+                  placeholder="admin"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}

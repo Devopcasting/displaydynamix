@@ -1,3 +1,9 @@
+"use client";
+
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '@/components/auth-provider';
+import { Loader2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -6,6 +12,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ThemeToggle } from "./components/theme-toggle";
 
 export default function SettingsPage() {
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!isLoading && user?.role !== 'Admin') {
+      router.replace('/dashboard');
+    }
+  }, [user, isLoading, router]);
+
+  if (isLoading || !user || user.role !== 'Admin') {
+    return (
+      <div className="flex h-full items-center justify-center bg-background">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="h-full flex flex-col">
       <header className="flex items-center justify-between h-14 px-4 sm:px-6 border-b bg-background">

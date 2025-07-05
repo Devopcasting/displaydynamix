@@ -16,9 +16,19 @@ interface PropertiesPanelProps {
     element: CanvasElement | null;
     onUpdate: (id: number, updates: Partial<CanvasElement>) => void;
     onDelete: () => void;
+    isReadOnly?: boolean;
 }
 
-export default function PropertiesPanel({ element, onUpdate, onDelete }: PropertiesPanelProps) {
+export default function PropertiesPanel({ element, onUpdate, onDelete, isReadOnly = false }: PropertiesPanelProps) {
+    if (isReadOnly) {
+        return (
+            <div className="p-4 text-center text-muted-foreground py-10">
+                <p>Viewing in read-only mode.</p>
+                <p className="text-xs mt-2">Editing properties is disabled for your role.</p>
+            </div>
+        )
+    }
+
     if (!element) {
         return (
             <div className="p-4 text-center text-muted-foreground py-10">

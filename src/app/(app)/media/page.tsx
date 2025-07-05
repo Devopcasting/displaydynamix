@@ -1,8 +1,11 @@
+"use client";
+
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Search, Upload, Trash2, Folder } from "lucide-react";
+import { Search, Upload, Trash2 } from "lucide-react";
+import { useAuth } from "@/components/auth-provider";
 
 const mediaAssets = [
   { name: "Corporate Event Highlights", type: "video", src: "https://placehold.co/400x225.png", hint: "corporate event" },
@@ -16,6 +19,9 @@ const mediaAssets = [
 ];
 
 export default function MediaPage() {
+  const { user } = useAuth();
+  const canEdit = user?.role === 'Admin' || user?.role === 'Editor';
+
   return (
     <div className="h-full flex flex-col">
       <header className="flex items-center justify-between h-14 px-4 sm:px-6 border-b bg-background">
@@ -25,10 +31,12 @@ export default function MediaPage() {
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input type="search" placeholder="Search assets..." className="pl-8" />
           </div>
-          <Button>
-            <Upload className="mr-2" />
-            Upload
-          </Button>
+          {canEdit && (
+            <Button>
+              <Upload className="mr-2" />
+              Upload
+            </Button>
+          )}
         </div>
       </header>
       <main className="flex-1 overflow-auto p-4 sm:p-6">
@@ -51,10 +59,12 @@ export default function MediaPage() {
               </CardContent>
               <CardFooter className="p-3 flex justify-between items-center">
                 <span className="text-sm truncate">{asset.name}</span>
-                <Button variant="ghost" size="icon" className="w-8 h-8 opacity-0 group-hover:opacity-100">
-                  <Trash2 className="w-4 h-4" />
-                  <span className="sr-only">Delete</span>
-                </Button>
+                {canEdit && (
+                  <Button variant="ghost" size="icon" className="w-8 h-8 opacity-0 group-hover:opacity-100">
+                    <Trash2 className="w-4 h-4" />
+                    <span className="sr-only">Delete</span>
+                  </Button>
+                )}
               </CardFooter>
             </Card>
           ))}

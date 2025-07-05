@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useAuth } from '@/components/auth-provider';
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -38,6 +39,7 @@ export interface Screen {
 }
 
 export default function ScreensPage() {
+  const { user } = useAuth();
   const [screens, setScreens] = useState<Screen[]>(initialScreens);
 
   const handleRegisterScreen = async (newScreenData: Omit<Screen, 'status' | 'content'>) => {
@@ -54,12 +56,14 @@ export default function ScreensPage() {
     <div className="h-full flex flex-col">
       <header className="flex items-center justify-between h-14 px-4 sm:px-6 border-b bg-background">
         <h1 className="text-lg font-semibold">Screen Management</h1>
-        <RegisterScreenDialog onRegister={handleRegisterScreen}>
-          <Button>
-            <Plus className="mr-2" />
-            Register Screen
-          </Button>
-        </RegisterScreenDialog>
+        {user?.role === 'Admin' && (
+            <RegisterScreenDialog onRegister={handleRegisterScreen}>
+              <Button>
+                <Plus className="mr-2" />
+                Register Screen
+              </Button>
+            </RegisterScreenDialog>
+        )}
       </header>
       <main className="flex-1 overflow-auto p-4 sm:p-6">
         <div className="border rounded-lg">
@@ -100,23 +104,25 @@ export default function ScreensPage() {
                   </TableCell>
                   <TableCell>{screen.content}</TableCell>
                   <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem>Push Content</DropdownMenuItem>
-                        <DropdownMenuItem>Preview</DropdownMenuItem>
-                        <DropdownMenuItem>Reboot</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive focus:text-destructive">
-                          Delete
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    {user?.role === 'Admin' && (
+                        <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                            <DropdownMenuItem>Push Content</DropdownMenuItem>
+                            <DropdownMenuItem>Preview</DropdownMenuItem>
+                            <DropdownMenuItem>Reboot</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive focus:text-destructive">
+                            Delete
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
