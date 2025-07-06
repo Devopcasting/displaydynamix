@@ -8,7 +8,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 
 export const metadata: Metadata = {
-  title: "Display Dynamix",
+  title: "Display Dynamix Studio",
   description: "A digital signage studio application.",
 };
 
@@ -22,8 +22,8 @@ export default function RootLayout({
       <body className="font-body antialiased h-full">
         <ThemeProvider
           attribute="class"
-          defaultTheme="system"
-          enableSystem
+          defaultTheme="light"
+          enableSystem={false}
           disableTransitionOnChange
         >
           <AuthProvider>

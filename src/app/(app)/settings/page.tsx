@@ -1,19 +1,20 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/components/auth-provider';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Users, Settings } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ThemeToggle } from "./components/theme-toggle";
+import UserManagement from './components/user-management';
 
 export default function SettingsPage() {
   const { user, isLoading } = useAuth();
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState("users");
 
   useEffect(() => {
     if (!isLoading && user?.role !== 'Admin') {
@@ -35,72 +36,72 @@ export default function SettingsPage() {
         <h1 className="text-lg font-semibold">Settings</h1>
       </header>
       <main className="flex-1 overflow-auto p-4 sm:p-6">
-        <div className="max-w-2xl mx-auto">
-          <Tabs defaultValue="profile">
+        <div className="max-w-4xl mx-auto">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="profile">Profile</TabsTrigger>
-              <TabsTrigger value="appearance">Appearance</TabsTrigger>
+              <TabsTrigger value="users" className="flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                User Management
+              </TabsTrigger>
+              <TabsTrigger value="system" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                System
+              </TabsTrigger>
             </TabsList>
-            <TabsContent value="profile">
+
+
+
+            <TabsContent value="users" className="space-y-6">
+              <UserManagement />
+            </TabsContent>
+
+            <TabsContent value="system" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Profile</CardTitle>
+                  <CardTitle>System Settings</CardTitle>
                   <CardDescription>
-                    Manage your account settings. This is for demonstration purposes only.
+                    Configure system-wide settings and preferences.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="name">Name</Label>
-                    <Input id="name" defaultValue="Admin" />
+                    <Label htmlFor="company-name">Company Name</Label>
+                    <Input id="company-name" defaultValue="Display Dynamix Studio" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email</Label>
-                    <Input id="email" type="email" defaultValue="admin@dynamix.co" readOnly />
+                    <Label htmlFor="timezone">Default Timezone</Label>
+                    <Input id="timezone" defaultValue="UTC" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="session-timeout">Session Timeout (minutes)</Label>
+                    <Input id="session-timeout" type="number" defaultValue="30" />
                   </div>
                 </CardContent>
                 <CardFooter className="border-t px-6 py-4">
-                    <Button>Save Changes</Button>
+                  <Button>Save Settings</Button>
                 </CardFooter>
               </Card>
 
-              <Card className="mt-6">
-                 <CardHeader>
-                  <CardTitle>Password</CardTitle>
+              <Card>
+                <CardHeader>
+                  <CardTitle>API Configuration</CardTitle>
                   <CardDescription>
-                    Change your password. This is for demonstration purposes only.
+                    Configure API endpoints and authentication settings.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="current-password">Current Password</Label>
-                    <Input id="current-password" type="password" />
+                    <Label htmlFor="api-url">API Base URL</Label>
+                    <Input id="api-url" defaultValue="http://localhost:8000/api" />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="new-password">New Password</Label>
-                    <Input id="new-password" type="password" />
+                    <Label htmlFor="api-timeout">API Timeout (seconds)</Label>
+                    <Input id="api-timeout" type="number" defaultValue="30" />
                   </div>
                 </CardContent>
                 <CardFooter className="border-t px-6 py-4">
-                    <Button>Change Password</Button>
+                  <Button>Test Connection</Button>
                 </CardFooter>
-              </Card>
-            </TabsContent>
-            <TabsContent value="appearance">
-               <Card>
-                <CardHeader>
-                  <CardTitle>Appearance</CardTitle>
-                  <CardDescription>
-                    Customize the look and feel of the application.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <div className="space-y-2">
-                        <Label>Theme</Label>
-                        <p className="text-sm text-muted-foreground">Select the theme for the dashboard.</p>
-                        <ThemeToggle />
-                    </div>
-                </CardContent>
               </Card>
             </TabsContent>
           </Tabs>

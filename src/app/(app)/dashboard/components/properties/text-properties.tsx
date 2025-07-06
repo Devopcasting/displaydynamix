@@ -2,6 +2,7 @@
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Checkbox } from '@/components/ui/checkbox';
 import type { CanvasElement } from '../../page';
 
 interface TextPropertiesProps {
@@ -24,6 +25,24 @@ export default function TextProperties({ properties, onUpdate }: TextPropertiesP
                 <div>
                     <Label>Color</Label>
                     <Input type="color" value={properties.color || '#000000'} onChange={e => onUpdate({ color: e.target.value })} className="h-10" />
+                </div>
+            </div>
+            <div className="flex gap-4">
+                <div className="flex items-center space-x-2">
+                    <Checkbox
+                        id="bold"
+                        checked={properties.bold || false}
+                        onCheckedChange={(checked) => onUpdate({ bold: checked })}
+                    />
+                    <Label htmlFor="bold" className="text-sm font-normal">Bold</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Checkbox
+                        id="italic"
+                        checked={properties.italic || false}
+                        onCheckedChange={(checked) => onUpdate({ italic: checked })}
+                    />
+                    <Label htmlFor="italic" className="text-sm font-normal">Italic</Label>
                 </div>
             </div>
         </div>

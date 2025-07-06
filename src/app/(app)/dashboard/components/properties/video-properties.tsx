@@ -6,16 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { FolderOpen, Upload, Image as ImageIcon } from 'lucide-react';
+import { FolderOpen, Upload, Video as VideoIcon, Play, Pause, Volume2 } from 'lucide-react';
 import type { CanvasElement } from '../../page';
 
-interface ImagePropertiesProps {
+interface VideoPropertiesProps {
     properties: CanvasElement['properties'];
     onUpdate: (updates: Partial<CanvasElement['properties']>) => void;
     onElementUpdate?: (updates: Partial<CanvasElement>) => void;
 }
 
-export default function ImageProperties({ properties, onUpdate, onElementUpdate }: ImagePropertiesProps) {
+export default function VideoProperties({ properties, onUpdate, onElementUpdate }: VideoPropertiesProps) {
     const [localFiles, setLocalFiles] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [selectedFile, setSelectedFile] = useState<string>('');
@@ -24,7 +24,7 @@ export default function ImageProperties({ properties, onUpdate, onElementUpdate 
     const fetchLocalFiles = async () => {
         setIsLoading(true);
         try {
-            const response = await fetch('/api/media/list?type=images');
+            const response = await fetch('/api/media/list?type=videos');
             if (response.ok) {
                 const files = await response.json();
                 setLocalFiles(files);
@@ -41,52 +41,52 @@ export default function ImageProperties({ properties, onUpdate, onElementUpdate 
     }, []);
 
     const handleFileSelect = (file: string) => {
-        const mediaUrl = `/media/images/${file}`;
+        const mediaUrl = `/media/videos/${file}`;
         onUpdate({ src: mediaUrl });
         setSelectedFile(file);
 
-        // Auto-resize to actual image dimensions
-        const img = new Image();
-        img.onload = () => {
+        // Auto-resize to actual video dimensions
+        const video = document.createElement('video');
+        video.onloadedmetadata = () => {
             if (onElementUpdate) {
                 onElementUpdate({
-                    width: img.naturalWidth,
-                    height: img.naturalHeight
+                    width: video.videoWidth,
+                    height: video.videoHeight
                 });
             }
         };
-        img.onerror = () => {
-            console.error('Failed to load image for dimension detection');
+        video.onerror = () => {
+            console.error('Failed to load video for dimension detection');
         };
-        img.src = mediaUrl;
+        video.src = mediaUrl;
     };
 
     const handleUrlChange = (url: string) => {
         onUpdate({ src: url });
         setSelectedFile(''); // Clear selected file when URL is manually entered
 
-        // Auto-resize to actual image dimensions if URL is provided
+        // Auto-resize to actual video dimensions if URL is provided
         if (url && url.trim() !== '') {
-            const img = new Image();
-            img.onload = () => {
+            const video = document.createElement('video');
+            video.onloadedmetadata = () => {
                 if (onElementUpdate) {
                     onElementUpdate({
-                        width: img.naturalWidth,
-                        height: img.naturalHeight
+                        width: video.videoWidth,
+                        height: video.videoHeight
                     });
                 }
             };
-            img.onerror = () => {
-                console.error('Failed to load image for dimension detection');
+            video.onerror = () => {
+                console.error('Failed to load video for dimension detection');
             };
-            img.src = url;
+            video.src = url;
         }
     };
 
     return (
         <div className="space-y-4">
             <div>
-                <Label>Image Source</Label>
+                <Label>Video Source</Label>
                 <div className="flex gap-2">
                     <Input
                         value={properties.src || ''}
@@ -101,7 +101,7 @@ export default function ImageProperties({ properties, onUpdate, onElementUpdate 
                         </DialogTrigger>
                         <DialogContent className="max-w-md">
                             <DialogHeader>
-                                <DialogTitle>Select Image from Local Storage</DialogTitle>
+                                <DialogTitle>Select Video from Local Storage</DialogTitle>
                             </DialogHeader>
                             <div className="space-y-4">
                                 <div className="flex items-center gap-2">
@@ -114,9 +114,9 @@ export default function ImageProperties({ properties, onUpdate, onElementUpdate 
                                 <ScrollArea className="h-64 border rounded-md p-2">
                                     {localFiles.length === 0 ? (
                                         <div className="text-center text-muted-foreground py-8">
-                                            <ImageIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                                            <p>No images found in local storage</p>
-                                            <p className="text-xs">Upload images to /srv/displaydynamix-media/images/</p>
+                                            <VideoIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                                            <p>No videos found in local storage</p>
+                                            <p className="text-xs">Upload videos to /srv/displaydynamix-media/videos/</p>
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-2 gap-2">
@@ -127,8 +127,8 @@ export default function ImageProperties({ properties, onUpdate, onElementUpdate 
                                                         }`}
                                                     onClick={() => handleFileSelect(file)}
                                                 >
-                                                    <div className="aspect-square bg-muted rounded mb-2 flex items-center justify-center">
-                                                        <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                                                    <div className="aspect-video bg-muted rounded mb-2 flex items-center justify-center">
+                                                        <VideoIcon className="h-6 w-6 text-muted-foreground" />
                                                     </div>
                                                     <p className="text-xs truncate" title={file}>
                                                         {file}
@@ -148,19 +148,58 @@ export default function ImageProperties({ properties, onUpdate, onElementUpdate 
                     </Dialog>
                 </div>
             </div>
-            <div>
-                <Label>Object Fit</Label>
-                <Select value={properties.objectFit || 'cover'} onValueChange={value => onUpdate({ objectFit: value })}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select fit" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="cover">Cover</SelectItem>
-                        <SelectItem value="contain">Contain</SelectItem>
-                        <SelectItem value="fill">Fill</SelectItem>
-                    </SelectContent>
-                </Select>
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <Label>Autoplay</Label>
+                    <Select value={properties.autoplay ? 'true' : 'false'} onValueChange={value => onUpdate({ autoplay: value === 'true' })}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select autoplay" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="true">Yes</SelectItem>
+                            <SelectItem value="false">No</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div>
+                    <Label>Loop</Label>
+                    <Select value={properties.loop ? 'true' : 'false'} onValueChange={value => onUpdate({ loop: value === 'true' })}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select loop" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="true">Yes</SelectItem>
+                            <SelectItem value="false">No</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <Label>Muted</Label>
+                    <Select value={properties.muted ? 'true' : 'false'} onValueChange={value => onUpdate({ muted: value === 'true' })}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select muted" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="true">Yes</SelectItem>
+                            <SelectItem value="false">No</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div>
+                    <Label>Controls</Label>
+                    <Select value={properties.controls ? 'true' : 'false'} onValueChange={value => onUpdate({ controls: value === 'true' })}>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Select controls" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="true">Show</SelectItem>
+                            <SelectItem value="false">Hide</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
             </div>
         </div>
     );
-}
+} 

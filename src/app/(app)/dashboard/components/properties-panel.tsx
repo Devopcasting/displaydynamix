@@ -9,6 +9,7 @@ import { Trash2 } from 'lucide-react';
 import CommonProperties from './properties/common-properties';
 import TextProperties from './properties/text-properties';
 import ImageProperties from './properties/image-properties';
+import VideoProperties from './properties/video-properties';
 import ShapeProperties from './properties/shape-properties';
 import MarqueeProperties from './properties/marquee-properties';
 import WeatherProperties from './properties/weather-properties';
@@ -45,13 +46,15 @@ export default function PropertiesPanel({ element, onUpdate, onDelete, isReadOnl
     const handleUpdateElement = (updates: Partial<CanvasElement>) => {
         onUpdate(element.id, updates);
     };
-    
+
     const renderElementProperties = () => {
         switch (element.type) {
             case 'Text':
                 return <TextProperties properties={element.properties} onUpdate={handleUpdateProperties} />;
             case 'Image':
-                return <ImageProperties properties={element.properties} onUpdate={handleUpdateProperties} />;
+                return <ImageProperties properties={element.properties} onUpdate={handleUpdateProperties} onElementUpdate={handleUpdateElement} />;
+            case 'Video':
+                return <VideoProperties properties={element.properties} onUpdate={handleUpdateProperties} onElementUpdate={handleUpdateElement} />;
             case 'Shapes':
                 return <ShapeProperties properties={element.properties} onUpdate={handleUpdateProperties} />;
             case 'Marquee':
@@ -65,7 +68,7 @@ export default function PropertiesPanel({ element, onUpdate, onDelete, isReadOnl
 
     return (
         <div className="space-y-4 pb-4">
-             <div className="p-4">
+            <div className="p-4">
                 <h3 className="font-semibold text-lg mb-2">{element.type} Properties</h3>
                 <Separator />
             </div>
@@ -75,12 +78,12 @@ export default function PropertiesPanel({ element, onUpdate, onDelete, isReadOnl
                     <AccordionItem value="transform">
                         <AccordionTrigger className="font-semibold text-base">Transform</AccordionTrigger>
                         <AccordionContent>
-                           <CommonProperties element={element} onUpdate={handleUpdateElement} />
+                            <CommonProperties element={element} onUpdate={handleUpdateElement} />
                         </AccordionContent>
                     </AccordionItem>
                 </Accordion>
             </div>
-            
+
             <div className="px-4">
                 {renderElementProperties()}
             </div>

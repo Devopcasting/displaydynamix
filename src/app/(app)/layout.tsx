@@ -34,6 +34,8 @@ import {
   Settings,
   LogOut,
   Loader2,
+  User,
+  FileText,
 } from "lucide-react";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -57,6 +59,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const allNavItems = [
     { href: "/dashboard", icon: LayoutDashboard, label: "Dashboard", roles: ["Admin", "Editor", "Viewer"] },
+    { href: "/templates", icon: FileText, label: "Templates", roles: ["Admin", "Editor", "Viewer"] },
     { href: "/media", icon: Library, label: "Media Library", roles: ["Admin", "Editor", "Viewer"] },
     { href: "/playlists", icon: ListVideo, label: "Playlists", roles: ["Admin", "Editor"] },
     { href: "/screens", icon: Monitor, label: "Screens", roles: ["Admin"] },
@@ -70,8 +73,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <Sidebar>
         <SidebarHeader>
           <div className="flex items-center gap-2">
-            <Logo className="w-8 h-8 text-primary" />
-            <span className="text-lg font-semibold">Display Dynamix</span>
+            <img
+              src="/images/logo.png"
+              alt="Logo"
+              className="w-12 h-12 object-contain"
+            />
+            <span className="text-sm font-semibold">Display Dynamix Studio</span>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -117,6 +124,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 </div>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push('/profile')}>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </DropdownMenuItem>
               {user.role === 'Admin' &&
                 <DropdownMenuItem onClick={() => router.push('/settings')}>
                   <Settings className="mr-2 h-4 w-4" />

@@ -1,4 +1,4 @@
-# **App Name**: Display Dynamix
+# **App Name**: Display Dynamix Studio
 
 ## Core Features:
 

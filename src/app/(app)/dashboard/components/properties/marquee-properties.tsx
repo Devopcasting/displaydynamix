@@ -4,7 +4,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import type { CanvasElement } from '../../../page';
+import { Checkbox } from '@/components/ui/checkbox';
+import type { CanvasElement } from '../../page';
 
 interface MarqueePropertiesProps {
     properties: CanvasElement['properties'];
@@ -26,6 +27,24 @@ export default function MarqueeProperties({ properties, onUpdate }: MarqueePrope
                 <div>
                     <Label>Color</Label>
                     <Input type="color" value={properties.color || '#000000'} onChange={e => onUpdate({ color: e.target.value })} className="h-10" />
+                </div>
+            </div>
+            <div className="flex gap-4">
+                <div className="flex items-center space-x-2">
+                    <Checkbox
+                        id="marquee-bold"
+                        checked={properties.bold || false}
+                        onCheckedChange={(checked) => onUpdate({ bold: checked })}
+                    />
+                    <Label htmlFor="marquee-bold" className="text-sm font-normal">Bold</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                    <Checkbox
+                        id="marquee-italic"
+                        checked={properties.italic || false}
+                        onCheckedChange={(checked) => onUpdate({ italic: checked })}
+                    />
+                    <Label htmlFor="marquee-italic" className="text-sm font-normal">Italic</Label>
                 </div>
             </div>
             <div>
