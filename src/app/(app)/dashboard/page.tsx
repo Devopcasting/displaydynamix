@@ -34,6 +34,9 @@ import PropertiesPanel from "./components/properties-panel";
 import { DraggableLayout } from "./components/draggable-layout";
 import { DraggableShape } from "./components/draggable-shape";
 import WeatherElement from "./components/weather-element";
+import TimeDateElement from "./components/time-date-element";
+import RSSFeedElement from "./components/rss-feed-element";
+import WebpageElement from "./components/webpage-element";
 import SaveTemplateDialog from "./components/save-template-dialog";
 
 const elements = [
@@ -219,15 +222,58 @@ function Editor() {
         return { shape: 'rectangle', color: 'hsl(var(--primary))' };
       case 'Weather':
         return { location: 'London', units: 'metric' };
+      case 'Time/Date':
+        return {
+          showTime: true,
+          showDate: true,
+          timeFormat: '12',
+          dateFormat: 'short',
+          fontSize: 24,
+          color: '#000000',
+          bold: false,
+          italic: false,
+          timeZone: 'local'
+        };
+      case 'RSS Feed':
+        return {
+          feedUrl: 'https://feeds.bbci.co.uk/news/rss.xml',
+          maxItems: 5,
+          showTitle: true,
+          showDescription: true,
+          showDate: true,
+          autoRotate: true,
+          rotationSpeed: 5,
+          fontSize: 16,
+          color: '#000000',
+          backgroundColor: 'transparent',
+          bold: false,
+          italic: false,
+          textAlign: 'left'
+        };
+      case 'Webpage':
+        return {
+          url: '',
+          allowFullscreen: false,
+          showScrollbars: true,
+          refreshInterval: 0,
+          backgroundColor: 'transparent'
+        };
       default:
         return {};
     }
   }, []);
 
   const handlePreview = () => {
+    console.log('Preview button clicked');
+    console.log('Canvas elements before serialization:', canvasElements);
+
     // Serialize elements for preview
     const serializedElements = canvasElements.map(serializeElement);
+    console.log('Serialized elements:', serializedElements);
+
     localStorage.setItem('canvasPreviewElements', JSON.stringify(serializedElements));
+    console.log('Preview data saved to localStorage');
+
     window.open('/preview', '_blank');
   };
 
@@ -709,6 +755,12 @@ function Editor() {
         return <div style={{ ...style, backgroundColor: properties.color }} />;
       case 'Weather':
         return <WeatherElement properties={properties} />;
+      case 'Time/Date':
+        return <TimeDateElement properties={properties} />;
+      case 'RSS Feed':
+        return <RSSFeedElement properties={properties} />;
+      case 'Webpage':
+        return <WebpageElement properties={properties} />;
       default:
         const ElementIcon = element.icon;
         return (

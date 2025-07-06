@@ -13,6 +13,9 @@ import VideoProperties from './properties/video-properties';
 import ShapeProperties from './properties/shape-properties';
 import MarqueeProperties from './properties/marquee-properties';
 import WeatherProperties from './properties/weather-properties';
+import TimeDateProperties from './properties/time-date-properties';
+import RSSFeedProperties from './properties/rss-feed-properties';
+import WebpageProperties from './properties/webpage-properties';
 
 interface PropertiesPanelProps {
     element: CanvasElement | null;
@@ -61,6 +64,12 @@ export default function PropertiesPanel({ element, onUpdate, onDelete, isReadOnl
                 return <MarqueeProperties properties={element.properties} onUpdate={handleUpdateProperties} />;
             case 'Weather':
                 return <WeatherProperties properties={element.properties} onUpdate={handleUpdateProperties} />;
+            case 'Time/Date':
+                return <TimeDateProperties properties={element.properties} onUpdate={handleUpdateProperties} />;
+            case 'RSS Feed':
+                return <RSSFeedProperties properties={element.properties} onUpdate={handleUpdateProperties} />;
+            case 'Webpage':
+                return <WebpageProperties properties={element.properties} onUpdate={handleUpdateProperties} />;
             default:
                 return <p className="p-4 text-sm text-muted-foreground">No specific properties for this element.</p>;
         }

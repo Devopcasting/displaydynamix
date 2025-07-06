@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import WeatherElement from '../(app)/dashboard/components/weather-element';
+import TimeDateElement from '../(app)/dashboard/components/time-date-element';
+import RSSFeedElement from '../(app)/dashboard/components/rss-feed-element';
+import WebpageElement from '../(app)/dashboard/components/webpage-element';
 
 // This type is a subset of the one in the editor, without the unserializable `icon` property.
 export interface PreviewElement {
@@ -17,6 +20,7 @@ export interface PreviewElement {
 }
 
 const renderElementContent = (element: PreviewElement) => {
+  console.log('Rendering element:', element);
   const { type, properties } = element;
   const style: React.CSSProperties = {
     width: '100%',
@@ -131,6 +135,12 @@ const renderElementContent = (element: PreviewElement) => {
       return <div style={{ ...style, backgroundColor: properties.color }} />;
     case 'Weather':
       return <WeatherElement properties={properties} />;
+    case 'Time/Date':
+      return <TimeDateElement properties={properties} />;
+    case 'RSS Feed':
+      return <RSSFeedElement properties={properties} />;
+    case 'Webpage':
+      return <WebpageElement properties={properties} />;
     default:
       // For unimplemented types like Clock, etc., show a placeholder.
       return (
@@ -148,10 +158,16 @@ export default function PreviewPage() {
 
   useEffect(() => {
     try {
+      console.log('Preview page loading...');
       const data = localStorage.getItem('canvasPreviewElements');
+      console.log('Raw localStorage data:', data);
+
       if (data) {
         const parsedElements = JSON.parse(data);
+        console.log('Parsed elements:', parsedElements);
         setElements(parsedElements);
+      } else {
+        console.log('No preview data found in localStorage');
       }
     } catch (e) {
       console.error("Failed to load preview data", e);
@@ -175,20 +191,26 @@ export default function PreviewPage() {
         </div>
       ) : (
         <div className="relative w-full h-full">
-          {elements.map((el) => (
-            <div key={el.id}
-              style={{
-                position: 'absolute',
-                top: `${el.y}px`,
-                left: `${el.x}px`,
-                width: `${el.width}px`,
-                height: `${el.height}px`,
-                transform: `rotate(${el.rotation || 0}deg)`,
-              }}
-            >
-              {renderElementContent(el)}
-            </div>
-          ))}
+          {(() => {
+            console.log('Rendering elements array:', elements);
+            return elements.map((el) => {
+              console.log('Mapping element:', el);
+              return (
+                <div key={el.id}
+                  style={{
+                    position: 'absolute',
+                    top: `${el.y}px`,
+                    left: `${el.x}px`,
+                    width: `${el.width}px`,
+                    height: `${el.height}px`,
+                    transform: `rotate(${el.rotation || 0}deg)`,
+                  }}
+                >
+                  {renderElementContent(el)}
+                </div>
+              );
+            });
+          })()}
         </div>
       )}
     </div>
