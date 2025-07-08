@@ -17,9 +17,6 @@ import {
   Clock,
   Globe,
   QrCode,
-  Layers,
-  Palette,
-  Play,
   Eye,
   Save,
   ZoomIn,
@@ -849,23 +846,7 @@ function Editor() {
                 ))}
               </div>
             </div>
-            <div>
-              <h2 className="text-md font-semibold mb-4">Other Tools</h2>
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" className="flex flex-col h-20">
-                  <Layers className="w-6 h-6 mb-1" />
-                  <span className="text-xs">Layers</span>
-                </Button>
-                <Button variant="outline" className="flex flex-col h-20">
-                  <Palette className="w-6 h-6 mb-1" />
-                  <span className="text-xs">Colors</span>
-                </Button>
-                <Button variant="outline" className="flex flex-col h-20">
-                  <Play className="w-6 h-6 mb-1" />
-                  <span className="text-xs">Animations</span>
-                </Button>
-              </div>
-            </div>
+
           </div>
         </aside>
 
