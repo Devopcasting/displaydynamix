@@ -120,11 +120,19 @@ class Config:
 
     @property
     def cors_allowed_headers(self) -> List[str]:
-        return self.getlist('cors', 'allowed_headers', ['Content-Type', 'Authorization'])
+        return self.getlist('cors', 'allowed_headers', ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin', 'Access-Control-Request-Method', 'Access-Control-Request-Headers'])
 
     @property
     def cors_allow_credentials(self) -> bool:
         return self.getboolean('cors', 'allow_credentials', True)
+
+    @property
+    def cors_expose_headers(self) -> List[str]:
+        return self.getlist('cors', 'expose_headers', ['Content-Disposition', 'Content-Length', 'Content-Type'])
+
+    @property
+    def cors_max_age(self) -> int:
+        return self.getint('cors', 'max_age', 86400)
 
     # Database configuration
     @property

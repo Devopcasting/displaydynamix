@@ -13,22 +13,22 @@ export default function CommonProperties({ element, onUpdate }: CommonProperties
         <div className="space-y-4 pt-2">
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <Label>X Position</Label>
-                    <Input type="number" value={Math.round(element.x)} onChange={e => onUpdate({ x: parseInt(e.target.value, 10) || 0 })} />
+                    <Label className="text-xs">X Position</Label>
+                    <Input className="text-xs h-8" type="number" value={Math.round(element.x)} onChange={e => onUpdate({ x: parseInt(e.target.value, 10) || 0 })} />
                 </div>
                 <div>
-                    <Label>Y Position</Label>
-                    <Input type="number" value={Math.round(element.y)} onChange={e => onUpdate({ y: parseInt(e.target.value, 10) || 0 })} />
+                    <Label className="text-xs">Y Position</Label>
+                    <Input className="text-xs h-8" type="number" value={Math.round(element.y)} onChange={e => onUpdate({ y: parseInt(e.target.value, 10) || 0 })} />
                 </div>
             </div>
              <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <Label>Width</Label>
-                    <Input type="number" value={Math.round(element.width)} onChange={e => onUpdate({ width: parseInt(e.target.value, 10) || 0 })} />
+                    <Label className="text-xs">Width</Label>
+                    <Input className="text-xs h-8" type="number" value={Math.round(element.width)} onChange={e => onUpdate({ width: parseInt(e.target.value, 10) || 0 })} />
                 </div>
                 <div>
-                    <Label>Height</Label>
-                    <Input type="number" value={Math.round(element.height)} onChange={e => onUpdate({ height: parseInt(e.target.value, 10) || 0 })} />
+                    <Label className="text-xs">Height</Label>
+                    <Input className="text-xs h-8" type="number" value={Math.round(element.height)} onChange={e => onUpdate({ height: parseInt(e.target.value, 10) || 0 })} />
                 </div>
             </div>
         </div>

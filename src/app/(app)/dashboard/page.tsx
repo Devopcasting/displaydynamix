@@ -167,6 +167,62 @@ function Editor() {
     elementStartWidth: number;
     elementStartHeight: number;
   } | null>(null);
+  const [canvasResolution, setCanvasResolution] = useState<{ width: number, height: number, mode: string }>({ width: 1280, height: 720, mode: '1280x720' });
+  const [customResolution, setCustomResolution] = useState<{ width: number, height: number }>({ width: 1280, height: 720 });
+  const [layoutSuggestions, setLayoutSuggestions] = useState<{ name: string, type: string }[]>([]);
+  const [zoomLevel, setZoomLevel] = useState<number>(1);
+
+  // Zoom functions
+  const handleZoomIn = () => {
+    setZoomLevel(prev => Math.min(prev + 0.25, 3));
+  };
+
+  const handleZoomOut = () => {
+    setZoomLevel(prev => Math.max(prev - 0.25, 0.25));
+  };
+
+  const handleZoomReset = () => {
+    setZoomLevel(1);
+  };
+
+  // Function to apply a suggested layout
+  function applySuggestedLayout(type: string) {
+    if (type === "side-by-side" && canvasElements.length === 2) {
+      setCanvasElements([
+        { ...canvasElements[0], x: 0, y: 0, width: 400, height: 600 },
+        { ...canvasElements[1], x: 400, y: 0, width: 400, height: 600 }
+      ]);
+    } else if (type === "top-bottom" && canvasElements.length === 2) {
+      setCanvasElements([
+        { ...canvasElements[0], x: 0, y: 0, width: 800, height: 300 },
+        { ...canvasElements[1], x: 0, y: 300, width: 800, height: 300 }
+      ]);
+    } else if (type === "image-text" && canvasElements.length === 2) {
+      // Place image left, text right
+      const imageIdx = canvasElements.findIndex(el => el.type === "Image");
+      const textIdx = canvasElements.findIndex(el => el.type === "Text");
+      if (imageIdx !== -1 && textIdx !== -1) {
+        const newArr = [...canvasElements];
+        newArr[imageIdx] = { ...newArr[imageIdx], x: 0, y: 0, width: 400, height: 600 };
+        newArr[textIdx] = { ...newArr[textIdx], x: 400, y: 0, width: 400, height: 600 };
+        setCanvasElements(newArr);
+      }
+    } else if (type === "text-image" && canvasElements.length === 2) {
+      // Place text left, image right
+      const imageIdx = canvasElements.findIndex(el => el.type === "Image");
+      const textIdx = canvasElements.findIndex(el => el.type === "Text");
+      if (imageIdx !== -1 && textIdx !== -1) {
+        const newArr = [...canvasElements];
+        newArr[textIdx] = { ...newArr[textIdx], x: 0, y: 0, width: 400, height: 600 };
+        newArr[imageIdx] = { ...newArr[imageIdx], x: 400, y: 0, width: 400, height: 600 };
+        setCanvasElements(newArr);
+      }
+    } else if (type === "single" && canvasElements.length === 1) {
+      setCanvasElements([
+        { ...canvasElements[0], x: 0, y: 0, width: 800, height: 600 }
+      ]);
+    }
+  }
 
   const updateElement = useCallback((id: number, updates: Partial<CanvasElement>) => {
     if (isReadOnly) return;
@@ -792,15 +848,48 @@ function Editor() {
 
   return (
     <div className="flex flex-col h-full bg-muted/40">
+      {/* Suggestions UI (must be inside Editor function) */}
+      {layoutSuggestions.length > 0 && (
+        <div className="my-2 mx-auto p-2 bg-muted rounded border w-fit z-20">
+          <div className="font-semibold mb-1">Suggested Layouts:</div>
+          <div className="flex gap-2">
+            {layoutSuggestions.map(suggestion => (
+              <button
+                key={suggestion.type}
+                className="px-3 py-1 bg-primary text-white rounded hover:bg-primary/80"
+                onClick={() => applySuggestedLayout(suggestion.type)}
+              >
+                {suggestion.name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <header className="flex items-center justify-between h-14 px-4 border-b bg-background">
-        <h1 className="text-lg font-semibold flex items-center gap-2">
-          {isLoadingTemplate && <Loader2 className="w-4 h-4 animate-spin" />}
-          {templateName}
-        </h1>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex gap-1">
+              <DraggableElement label="Shapes" icon={Shapes} disabled={isReadOnly} />
+              {elements.filter(el => el.label !== 'Shapes').map((el) => {
+                return <DraggableElement key={el.label} label={el.label} icon={el.icon} disabled={isReadOnly} />
+              })}
+            </div>
+            <div className="flex gap-1">
+              {layouts.map((layout) => (
+                <DraggableLayout key={layout.type} name={layout.name} type={layout.type} disabled={isReadOnly} />
+              ))}
+            </div>
+          </div>
+        </div>
         <div className="flex items-center gap-2">
+          <h1 className="text-sm font-semibold flex items-center gap-2 mr-4">
+            {isLoadingTemplate && <Loader2 className="w-4 h-4 animate-spin" />}
+            {templateName}
+          </h1>
           <Button
             variant="outline"
             size="sm"
+            className="h-8 px-3 text-xs"
             onClick={() => {
               setCanvasElements([]);
               setSelectedElementId(null);
@@ -810,47 +899,109 @@ function Editor() {
             }}
             disabled={isReadOnly}
           >
-            <RotateCcw className="mr-2" />
             Clear Canvas
           </Button>
-          <Button variant="outline" size="sm" onClick={handlePreview}>
-            <Eye className="mr-2" />
+          <Button variant="outline" size="sm" className="h-8 px-3 text-xs" onClick={handlePreview}>
             Preview
           </Button>
           <SaveTemplateDialog onSave={handleSaveTemplate} disabled={isReadOnly}>
-            <Button size="sm" disabled={isReadOnly}>
-              <Save className="mr-2" />
+            <Button size="sm" className="h-8 px-3 text-xs" disabled={isReadOnly}>
               Save
             </Button>
           </SaveTemplateDialog>
         </div>
       </header>
       <main className="flex-1 flex overflow-hidden">
-        <aside className="w-64 border-r bg-background overflow-y-auto">
-          <div className="p-4 space-y-6">
-            <div>
-              <h2 className="text-md font-semibold mb-4">Elements</h2>
-              <div className="grid grid-cols-2 gap-2">
-                <DraggableElement label="Shapes" icon={Shapes} disabled={isReadOnly} />
-                {elements.filter(el => el.label !== 'Shapes').map((el) => {
-                  return <DraggableElement key={el.label} label={el.label} icon={el.icon} disabled={isReadOnly} />
-                })}
-              </div>
-            </div>
-            <div>
-              <h2 className="text-md font-semibold mb-4">Layouts</h2>
-              <p className="text-xs text-muted-foreground mb-2">Drag a layout onto the canvas to apply it.</p>
-              <div className="grid grid-cols-2 gap-2">
-                {layouts.map((layout) => (
-                  <DraggableLayout key={layout.type} name={layout.name} type={layout.type} disabled={isReadOnly} />
-                ))}
-              </div>
-            </div>
-
-          </div>
-        </aside>
-
         <div className="flex-1 flex flex-col items-center justify-center p-4 overflow-hidden">
+          {/* Resolution Selector UI */}
+          <div className="flex items-center gap-2 mb-2">
+            <label className="text-sm font-medium">Resolution:</label>
+            <select
+              className="border rounded px-2 py-1 text-xs"
+              value={canvasResolution.mode}
+              onChange={e => {
+                const val = e.target.value;
+                if (val === 'custom') {
+                  setCanvasResolution({ width: customResolution.width, height: customResolution.height, mode: 'custom' });
+                } else {
+                  const [w, h] = val.split('x').map(Number);
+                  setCanvasResolution({ width: w, height: h, mode: val });
+                }
+              }}
+            >
+              <option value="1920x1080">1920 x 1080 (Full HD)</option>
+              <option value="1280x720">1280 x 720 (HD)</option>
+              <option value="1080x1920">1080 x 1920 (Portrait)</option>
+              <option value="3840x2160">3840 x 2160 (4K UHD)</option>
+              <option value="custom">Custom...</option>
+            </select>
+            {canvasResolution.mode === 'custom' && (
+              <>
+                <input
+                  type="number"
+                  min={100}
+                  max={10000}
+                  value={customResolution.width}
+                  onChange={e => {
+                    const w = Number(e.target.value);
+                    setCustomResolution(res => ({ ...res, width: w }));
+                    setCanvasResolution(res => ({ ...res, width: w }));
+                  }}
+                  className="w-20 border rounded px-2 py-1"
+                  placeholder="Width"
+                />
+                <span>x</span>
+                <input
+                  type="number"
+                  min={100}
+                  max={10000}
+                  value={customResolution.height}
+                  onChange={e => {
+                    const h = Number(e.target.value);
+                    setCustomResolution(res => ({ ...res, height: h }));
+                    setCanvasResolution(res => ({ ...res, height: h }));
+                  }}
+                  className="w-20 border rounded px-2 py-1"
+                  placeholder="Height"
+                />
+              </>
+            )}
+            <span className="text-xs text-muted-foreground">{canvasResolution.width} x {canvasResolution.height}</span>
+            
+            {/* Zoom Controls */}
+            <div className="flex items-center gap-1 ml-4">
+              <label className="text-sm font-medium">Zoom:</label>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleZoomOut}
+                disabled={zoomLevel <= 0.25}
+                className="h-8 w-8 p-0"
+                title="Zoom Out"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleZoomReset}
+                className="h-8 px-2 text-xs"
+                title="Reset Zoom"
+              >
+                {Math.round(zoomLevel * 100)}%
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleZoomIn}
+                disabled={zoomLevel >= 3}
+                className="h-8 w-8 p-0"
+                title="Zoom In"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
           {showLoadedMessage && canvasElements.length > 0 && (
             <div className="mb-4 px-4 py-2 bg-green-100 border border-green-300 rounded-lg transition-opacity duration-300">
               <p className="text-green-800 text-sm font-medium">
@@ -858,12 +1009,21 @@ function Editor() {
               </p>
             </div>
           )}
-          <div className="w-full h-full bg-background shadow-lg rounded-lg border flex items-center justify-center relative">
-            <div className="absolute top-2 left-2 flex gap-1">
-              <Button variant="ghost" size="icon"><ZoomIn /></Button>
-              <Button variant="ghost" size="icon"><ZoomOut /></Button>
-            </div>
-            <div ref={canvasRef} className="w-[80%] h-[80%] border-2 border-dashed relative bg-[linear-gradient(to_right,theme(colors.border)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.border)_1px,transparent_1px)] bg-[size:2rem_2rem]" style={{ backgroundColor: getCanvasBgColor(), transition: 'background-color 0.2s', cursor: isReadOnly ? 'default' : 'auto' }}
+          <div className="w-full h-full bg-background shadow-lg rounded-lg border flex items-center justify-center relative overflow-auto">
+            <div
+              ref={canvasRef}
+              style={{
+                width: `${canvasResolution.width * zoomLevel}px`,
+                height: `${canvasResolution.height * zoomLevel}px`,
+                minWidth: `${canvasResolution.width * zoomLevel}px`,
+                minHeight: `${canvasResolution.height * zoomLevel}px`,
+                backgroundColor: getCanvasBgColor(),
+                transition: 'background-color 0.2s, transform 0.2s',
+                cursor: isReadOnly ? 'default' : 'auto',
+                transform: `scale(${zoomLevel})`,
+                transformOrigin: 'center center',
+              }}
+              className="border-2 border-dashed relative bg-[linear-gradient(to_right,theme(colors.border)_1px,transparent_1px),linear-gradient(to_bottom,theme(colors.border)_1px,transparent_1px)] bg-[size:2rem_2rem]"
               onClick={() => setSelectedElementId(null)}
             >
               {isApplyingLayout && (
@@ -938,6 +1098,7 @@ function Editor() {
             onUpdate={updateElement}
             onDelete={deleteSelectedElement}
             isReadOnly={isReadOnly}
+            canvasResolution={canvasResolution}
           />
         </aside>
       </main>

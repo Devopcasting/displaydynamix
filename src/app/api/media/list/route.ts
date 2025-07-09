@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { promises as fs } from 'fs';
 import path from 'path';
+import { withCors } from '@/lib/cors';
 
-export async function GET(request: NextRequest) {
+async function handleGET(request: NextRequest) {
     try {
         const { searchParams } = new URL(request.url);
         const type = searchParams.get('type'); // 'images' or 'videos'
@@ -43,4 +44,6 @@ export async function GET(request: NextRequest) {
         console.error('Error listing media files:', error);
         return NextResponse.json({ error: 'Failed to list media files' }, { status: 500 });
     }
-} 
+}
+
+export const GET = withCors(handleGET); 

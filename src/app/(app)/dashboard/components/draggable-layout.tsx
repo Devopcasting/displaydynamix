@@ -2,6 +2,7 @@
 'use client';
 import type { FC } from 'react';
 import { useDrag } from 'react-dnd';
+import { Button } from '@/components/ui/button';
 import { ItemTypes } from './draggable-element';
 import { LayoutPreview } from './layout-preview';
 
@@ -25,15 +26,19 @@ export const DraggableLayout: FC<DraggableLayoutProps> = ({ type, name, disabled
     <div
       ref={drag}
       style={{ opacity: isDragging ? 0.5 : 1 }}
-      className="cursor-grab group space-y-1.5 p-2 border bg-card rounded-lg hover:border-primary hover:shadow-md transition-all data-[disabled=true]:cursor-not-allowed data-[disabled=true]:opacity-50"
+      className="cursor-grab group"
       data-disabled={disabled}
+      title={name}
     >
-      <div className="aspect-video h-12 mx-auto pointer-events-none">
-        <LayoutPreview type={type} />
-      </div>
-      <p className="text-center text-xs font-medium text-muted-foreground group-hover:text-primary transition-colors truncate">
-        {name}
-      </p>
+      <Button 
+        variant="outline" 
+        className="flex flex-col h-12 w-12 p-1 pointer-events-none" 
+        disabled={disabled}
+      >
+        <div className="h-6 w-6 mx-auto pointer-events-none">
+          <LayoutPreview type={type} />
+        </div>
+      </Button>
     </div>
   );
 };

@@ -28,10 +28,13 @@ export const DraggableElement: FC<DraggableElementProps> = ({ icon: Icon, label,
   }));
 
   return (
-    <div ref={drag} style={{ opacity: isDragging ? 0.5 : 1, cursor: disabled ? 'not-allowed' : 'move' }}>
-      <Button variant="outline" className="flex flex-col h-20 w-full pointer-events-none" disabled={disabled}>
-        <Icon className="w-6 h-6 mb-1" />
-        <span className="text-xs">{label}</span>
+    <div 
+      ref={drag}
+      style={{ opacity: isDragging ? 0.5 : 1, cursor: disabled ? 'not-allowed' : 'move' }}
+      title={label}
+    >
+      <Button variant="outline" className="flex flex-col h-12 w-12 p-1 pointer-events-none" disabled={disabled}>
+        <Icon className="w-4 h-4" />
       </Button>
     </div>
   );

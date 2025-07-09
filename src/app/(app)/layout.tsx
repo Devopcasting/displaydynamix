@@ -3,17 +3,6 @@
 import React, { useEffect } from "react";
 import { useAuth } from "@/components/auth-provider";
 import { useRouter, usePathname } from "next/navigation";
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarHeader,
-  SidebarContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  SidebarFooter,
-  SidebarInset,
-} from "@/components/ui/sidebar";
 import { Logo } from "@/components/icons";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -69,48 +58,49 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const navItems = allNavItems.filter(item => user && item.roles.includes(user.role));
 
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <div className="flex items-center gap-2">
-            <img
-              src="/images/logo.png"
-              alt="Logo"
-              className="w-12 h-12 object-contain"
-            />
-            <span className="text-sm font-semibold">Display Dynamix Studio</span>
-          </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            {navItems.map((item) => (
-              <SidebarMenuItem key={item.href}>
-                <SidebarMenuButton
-                  isActive={pathname.startsWith(item.href)}
-                  onClick={() => router.push(item.href)}
-                >
-                  <item.icon />
-                  <span>{item.label}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter>
+    <div className="flex flex-col h-screen">
+      {/* Header Navbar */}
+      <header className="flex items-center justify-between h-16 px-6 border-b bg-background">
+        {/* Logo and Title */}
+        <div className="flex items-center gap-0.5">
+          <img
+            src="/images/logo.png"
+            alt="Logo"
+            className="w-16 h-16 object-contain"
+          />
+          <span className="text-2xl font-bold text-primary">Display Dynamix Studio</span>
+        </div>
+
+        {/* Navigation Items */}
+        <nav className="flex items-center gap-1">
+          {navItems.map((item) => (
+            <Button
+              key={item.href}
+              variant={pathname.startsWith(item.href) ? "default" : "ghost"}
+              size="sm"
+              onClick={() => router.push(item.href)}
+              className="flex items-center gap-2"
+            >
+              <item.icon className="w-4 h-4" />
+              <span>{item.label}</span>
+            </Button>
+          ))}
+        </nav>
+
+        {/* User Menu */}
+        <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="justify-start w-full p-2 h-auto">
-                <div className="flex items-center gap-2">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src="https://placehold.co/40x40.png" alt={user.username} data-ai-hint="user avatar" />
-                    <AvatarFallback>{user.username.substring(0, 2).toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <div className="text-left">
-                    <p className="text-sm font-medium">{user.username}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {user.email}
-                    </p>
-                  </div>
+              <Button variant="ghost" className="flex items-center gap-2 p-2 h-auto">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src="https://placehold.co/40x40.png" alt={user.username} data-ai-hint="user avatar" />
+                  <AvatarFallback>{user.username.substring(0, 2).toUpperCase()}</AvatarFallback>
+                </Avatar>
+                <div className="text-left hidden md:block">
+                  <p className="text-sm font-medium">{user.username}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {user.email}
+                  </p>
                 </div>
               </Button>
             </DropdownMenuTrigger>
@@ -141,9 +131,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset>{children}</SidebarInset>
-    </SidebarProvider>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="flex-1 overflow-hidden">
+        {children}
+      </main>
+    </div>
   );
 }

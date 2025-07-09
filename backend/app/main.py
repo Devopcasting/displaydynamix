@@ -35,6 +35,8 @@ app.add_middleware(
     allow_credentials=config.cors_allow_credentials,
     allow_methods=config.cors_allowed_methods,
     allow_headers=config.cors_allowed_headers,
+    expose_headers=config.cors_expose_headers,
+    max_age=config.cors_max_age,
 )
 
 # Include routers
