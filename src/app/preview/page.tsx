@@ -5,6 +5,7 @@ import WeatherElement from '../(app)/dashboard/components/weather-element';
 import TimeDateElement from '../(app)/dashboard/components/time-date-element';
 import RSSFeedElement from '../(app)/dashboard/components/rss-feed-element';
 import WebpageElement from '../(app)/dashboard/components/webpage-element';
+import QRCodeElement from '../(app)/dashboard/components/qr-code-element';
 
 // This type is a subset of the one in the editor, without the unserializable `icon` property.
 export interface PreviewElement {
@@ -141,6 +142,8 @@ const renderElementContent = (element: PreviewElement) => {
       return <RSSFeedElement properties={properties} />;
     case 'Webpage':
       return <WebpageElement properties={properties} />;
+    case 'QR Code':
+      return <QRCodeElement properties={properties} />;
     default:
       // For unimplemented types like Clock, etc., show a placeholder.
       return (

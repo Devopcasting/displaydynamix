@@ -112,7 +112,7 @@ export default function TimeDateProperties({ properties, onUpdate }: TimeDatePro
                 <h4 className="font-medium mb-3">Styling</h4>
                 <div className="space-y-3">
                     <div>
-                        <Label htmlFor="fontSize" className="text-sm">Font Size</Label>
+                        <Label htmlFor="fontSize" className="text-xs">Font Size</Label>
                         <Input
                             id="fontSize"
                             type="number"
@@ -123,7 +123,7 @@ export default function TimeDateProperties({ properties, onUpdate }: TimeDatePro
                         />
                     </div>
                     <div>
-                        <Label htmlFor="color" className="text-sm">Color</Label>
+                        <Label htmlFor="color" className="text-xs">Color</Label>
                         <Input
                             id="color"
                             type="color"
@@ -132,7 +132,7 @@ export default function TimeDateProperties({ properties, onUpdate }: TimeDatePro
                         />
                     </div>
                     <div className="flex items-center justify-between">
-                        <Label htmlFor="bold" className="text-sm">Bold</Label>
+                        <Label htmlFor="bold" className="text-xs">Bold</Label>
                         <Switch
                             id="bold"
                             checked={properties.bold || false}
@@ -140,7 +140,7 @@ export default function TimeDateProperties({ properties, onUpdate }: TimeDatePro
                         />
                     </div>
                     <div className="flex items-center justify-between">
-                        <Label htmlFor="italic" className="text-sm">Italic</Label>
+                        <Label htmlFor="italic" className="text-xs">Italic</Label>
                         <Switch
                             id="italic"
                             checked={properties.italic || false}

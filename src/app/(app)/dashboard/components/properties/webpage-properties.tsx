@@ -34,7 +34,7 @@ export default function WebpageProperties({ properties, onUpdate }: WebpagePrope
             </div>
 
             <div className="space-y-2">
-                <Label htmlFor="webpage-url">URL</Label>
+                <Label htmlFor="webpage-url" className="text-xs">URL</Label>
                 <Input
                     id="webpage-url"
                     type="url"
@@ -50,13 +50,13 @@ export default function WebpageProperties({ properties, onUpdate }: WebpagePrope
             <Separator />
 
             <div className="space-y-2">
-                <Label className="flex items-center gap-2">
+                <Label className="flex items-center gap-2 text-xs">
                     <Monitor className="w-4 h-4" />
                     Display Options
                 </Label>
 
                 <div className="flex items-center justify-between">
-                    <Label htmlFor="allow-fullscreen" className="text-sm">
+                    <Label htmlFor="allow-fullscreen" className="text-xs">
                         Allow Fullscreen
                     </Label>
                     <Switch
@@ -67,7 +67,7 @@ export default function WebpageProperties({ properties, onUpdate }: WebpagePrope
                 </div>
 
                 <div className="flex items-center justify-between">
-                    <Label htmlFor="show-scrollbars" className="text-sm flex items-center gap-1">
+                    <Label htmlFor="show-scrollbars" className="text-xs flex items-center gap-1">
                         <Scroll className="w-3 h-3" />
                         Show Scrollbars
                     </Label>
@@ -82,7 +82,7 @@ export default function WebpageProperties({ properties, onUpdate }: WebpagePrope
             <Separator />
 
             <div className="space-y-2">
-                <Label className="flex items-center gap-2">
+                <Label className="flex items-center gap-2 text-xs">
                     <RefreshCw className="w-4 h-4" />
                     Auto-Refresh
                 </Label>
@@ -105,7 +105,7 @@ export default function WebpageProperties({ properties, onUpdate }: WebpagePrope
             <Separator />
 
             <div className="space-y-2">
-                <Label htmlFor="background-color">Background Color</Label>
+                <Label htmlFor="background-color" className="text-xs">Background Color</Label>
                 <div className="flex gap-2">
                     <Input
                         id="background-color"

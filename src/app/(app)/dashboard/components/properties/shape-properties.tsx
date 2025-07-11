@@ -17,7 +17,7 @@ export default function ShapeProperties({ properties, onUpdate }: ShapePropertie
     return (
         <div className="space-y-4">
             <div>
-                <Label>Shape Type</Label>
+                <Label className="text-xs">Shape Type</Label>
                 <div className="grid grid-cols-4 gap-2 pt-2">
                     {shapeTypes.map(shape => (
                         <button
@@ -37,7 +37,7 @@ export default function ShapeProperties({ properties, onUpdate }: ShapePropertie
                 </div>
             </div>
             <div>
-                <Label>Color</Label>
+                <Label className="text-xs">Color</Label>
                 <Input type="color" value={properties.color || '#000000'} onChange={e => onUpdate({ color: e.target.value })} className="h-10" />
             </div>
         </div>

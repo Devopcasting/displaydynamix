@@ -86,7 +86,7 @@ export default function ImageProperties({ properties, onUpdate, onElementUpdate 
     return (
         <div className="space-y-4">
             <div>
-                <Label>Image Source</Label>
+                <Label className="text-xs">Image Source</Label>
                 <div className="flex gap-2">
                     <Input
                         value={properties.src || ''}
@@ -149,7 +149,7 @@ export default function ImageProperties({ properties, onUpdate, onElementUpdate 
                 </div>
             </div>
             <div>
-                <Label>Object Fit</Label>
+                <Label className="text-xs">Object Fit</Label>
                 <Select value={properties.objectFit || 'cover'} onValueChange={value => onUpdate({ objectFit: value })}>
                     <SelectTrigger>
                         <SelectValue placeholder="Select fit" />

@@ -34,6 +34,7 @@ import WeatherElement from "./components/weather-element";
 import TimeDateElement from "./components/time-date-element";
 import RSSFeedElement from "./components/rss-feed-element";
 import WebpageElement from "./components/webpage-element";
+import QRCodeElement from "./components/qr-code-element";
 import SaveTemplateDialog from "./components/save-template-dialog";
 
 const elements = [
@@ -310,6 +311,15 @@ function Editor() {
           showScrollbars: true,
           refreshInterval: 0,
           backgroundColor: 'transparent'
+        };
+      case 'QR Code':
+        return {
+          content: 'https://example.com',
+          size: 200,
+          foregroundColor: '#000000',
+          backgroundColor: '#FFFFFF',
+          errorCorrectionLevel: 'M',
+          format: 'url'
         };
       default:
         return {};
@@ -814,6 +824,8 @@ function Editor() {
         return <RSSFeedElement properties={properties} />;
       case 'Webpage':
         return <WebpageElement properties={properties} />;
+      case 'QR Code':
+        return <QRCodeElement properties={properties} />;
       default:
         const ElementIcon = element.icon;
         return (

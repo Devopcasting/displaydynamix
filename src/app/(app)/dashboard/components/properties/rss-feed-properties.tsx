@@ -122,7 +122,7 @@ export default function RSSFeedProperties({ properties, onUpdate }: RSSFeedPrope
                 <h4 className="font-medium mb-3">Styling</h4>
                 <div className="space-y-3">
                     <div>
-                        <Label htmlFor="fontSize" className="text-sm">Font Size</Label>
+                        <Label htmlFor="fontSize" className="text-xs">Font Size</Label>
                         <Input
                             id="fontSize"
                             type="number"
@@ -133,7 +133,7 @@ export default function RSSFeedProperties({ properties, onUpdate }: RSSFeedPrope
                         />
                     </div>
                     <div>
-                        <Label htmlFor="color" className="text-sm">Text Color</Label>
+                        <Label htmlFor="color" className="text-xs">Text Color</Label>
                         <Input
                             id="color"
                             type="color"
@@ -142,7 +142,7 @@ export default function RSSFeedProperties({ properties, onUpdate }: RSSFeedPrope
                         />
                     </div>
                     <div>
-                        <Label htmlFor="backgroundColor" className="text-sm">Background Color</Label>
+                        <Label htmlFor="backgroundColor" className="text-xs">Background Color</Label>
                         <Input
                             id="backgroundColor"
                             type="color"
@@ -151,7 +151,7 @@ export default function RSSFeedProperties({ properties, onUpdate }: RSSFeedPrope
                         />
                     </div>
                     <div>
-                        <Label htmlFor="textAlign" className="text-sm">Text Alignment</Label>
+                        <Label htmlFor="textAlign" className="text-xs">Text Alignment</Label>
                         <Select
                             value={properties.textAlign || 'left'}
                             onValueChange={(value) => onUpdate({ textAlign: value })}
@@ -167,7 +167,7 @@ export default function RSSFeedProperties({ properties, onUpdate }: RSSFeedPrope
                         </Select>
                     </div>
                     <div className="flex items-center justify-between">
-                        <Label htmlFor="bold" className="text-sm">Bold</Label>
+                        <Label htmlFor="bold" className="text-xs">Bold</Label>
                         <Switch
                             id="bold"
                             checked={properties.bold || false}
@@ -175,7 +175,7 @@ export default function RSSFeedProperties({ properties, onUpdate }: RSSFeedPrope
                         />
                     </div>
                     <div className="flex items-center justify-between">
-                        <Label htmlFor="italic" className="text-sm">Italic</Label>
+                        <Label htmlFor="italic" className="text-xs">Italic</Label>
                         <Switch
                             id="italic"
                             checked={properties.italic || false}

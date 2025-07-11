@@ -16,6 +16,7 @@ import WeatherProperties from './properties/weather-properties';
 import TimeDateProperties from './properties/time-date-properties';
 import RSSFeedProperties from './properties/rss-feed-properties';
 import WebpageProperties from './properties/webpage-properties';
+import QRCodeProperties from './properties/qr-code-properties';
 
 interface PropertiesPanelProps {
     element: CanvasElement | null;
@@ -98,6 +99,8 @@ export default function PropertiesPanel({ element, onUpdate, onDelete, isReadOnl
                 return <RSSFeedProperties properties={element.properties} onUpdate={handleUpdateProperties} />;
             case 'Webpage':
                 return <WebpageProperties properties={element.properties} onUpdate={handleUpdateProperties} />;
+            case 'QR Code':
+                return <QRCodeProperties properties={element.properties} onUpdate={handleUpdateProperties} />;
             default:
                 return <p className="p-4 text-xs text-muted-foreground">No specific properties for this element.</p>;
         }

@@ -86,7 +86,7 @@ export default function VideoProperties({ properties, onUpdate, onElementUpdate 
     return (
         <div className="space-y-4">
             <div>
-                <Label>Video Source</Label>
+                <Label className="text-xs">Video Source</Label>
                 <div className="flex gap-2">
                     <Input
                         value={properties.src || ''}
@@ -150,7 +150,7 @@ export default function VideoProperties({ properties, onUpdate, onElementUpdate 
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <Label>Autoplay</Label>
+                    <Label className="text-xs">Autoplay</Label>
                     <Select value={properties.autoplay ? 'true' : 'false'} onValueChange={value => onUpdate({ autoplay: value === 'true' })}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select autoplay" />
@@ -162,7 +162,7 @@ export default function VideoProperties({ properties, onUpdate, onElementUpdate 
                     </Select>
                 </div>
                 <div>
-                    <Label>Loop</Label>
+                    <Label className="text-xs">Loop</Label>
                     <Select value={properties.loop ? 'true' : 'false'} onValueChange={value => onUpdate({ loop: value === 'true' })}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select loop" />
@@ -176,7 +176,7 @@ export default function VideoProperties({ properties, onUpdate, onElementUpdate 
             </div>
             <div className="grid grid-cols-2 gap-4">
                 <div>
-                    <Label>Muted</Label>
+                    <Label className="text-xs">Muted</Label>
                     <Select value={properties.muted ? 'true' : 'false'} onValueChange={value => onUpdate({ muted: value === 'true' })}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select muted" />
@@ -188,7 +188,7 @@ export default function VideoProperties({ properties, onUpdate, onElementUpdate 
                     </Select>
                 </div>
                 <div>
-                    <Label>Controls</Label>
+                    <Label className="text-xs">Controls</Label>
                     <Select value={properties.controls ? 'true' : 'false'} onValueChange={value => onUpdate({ controls: value === 'true' })}>
                         <SelectTrigger>
                             <SelectValue placeholder="Select controls" />

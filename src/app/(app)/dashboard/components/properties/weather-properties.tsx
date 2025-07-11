@@ -13,7 +13,7 @@ export default function WeatherProperties({ properties, onUpdate }: WeatherPrope
     return (
         <div className="space-y-4">
             <div>
-                <Label>Location</Label>
+                <Label className="text-xs">Location</Label>
                 <Input 
                     placeholder="e.g., London, UK"
                     value={properties.location || ''} 
@@ -21,7 +21,7 @@ export default function WeatherProperties({ properties, onUpdate }: WeatherPrope
                 />
             </div>
             <div>
-                <Label>Units</Label>
+                <Label className="text-xs">Units</Label>
                 <Select value={properties.units || 'metric'} onValueChange={value => onUpdate({ units: value })}>
                     <SelectTrigger>
                         <SelectValue placeholder="Select units" />
