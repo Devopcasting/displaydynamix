@@ -44,6 +44,6 @@ async function handleGET(request: NextRequest) {
         console.error('Error listing media files:', error);
         return NextResponse.json({ error: 'Failed to list media files' }, { status: 500 });
     }
-}
+} 
 
 export const GET = withCors(handleGET); 

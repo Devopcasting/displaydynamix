@@ -34,10 +34,10 @@ export const DraggableLayout: FC<DraggableLayoutProps> = ({ type, name, disabled
         variant="outline" 
         className="flex flex-col h-12 w-12 p-1 pointer-events-none" 
         disabled={disabled}
-      >
+    >
         <div className="h-6 w-6 mx-auto pointer-events-none">
-          <LayoutPreview type={type} />
-        </div>
+        <LayoutPreview type={type} />
+      </div>
       </Button>
     </div>
   );

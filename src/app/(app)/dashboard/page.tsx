@@ -269,7 +269,7 @@ function Editor() {
       case 'Image':
         return { src: 'https://placehold.co/300x200.png', objectFit: 'cover' };
       case 'Video':
-        return { src: '', autoplay: true, loop: true, muted: true, controls: false };
+        return { src: 'http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4', autoplay: true, loop: true, muted: true, controls: false };
       case 'Marquee':
         return { content: 'Scrolling text...', fontSize: 24, color: '#000000', speed: 5, direction: 'rtl' };
       case 'Shapes':
@@ -895,9 +895,9 @@ function Editor() {
         </div>
         <div className="flex items-center gap-2">
           <h1 className="text-sm font-semibold flex items-center gap-2 mr-4">
-            {isLoadingTemplate && <Loader2 className="w-4 h-4 animate-spin" />}
-            {templateName}
-          </h1>
+          {isLoadingTemplate && <Loader2 className="w-4 h-4 animate-spin" />}
+          {templateName}
+        </h1>
           <Button
             variant="outline"
             size="sm"
@@ -1012,7 +1012,7 @@ function Editor() {
               >
                 <ZoomIn className="w-4 h-4" />
               </Button>
-            </div>
+          </div>
           </div>
           {showLoadedMessage && canvasElements.length > 0 && (
             <div className="mb-4 px-4 py-2 bg-green-100 border border-green-300 rounded-lg transition-opacity duration-300">

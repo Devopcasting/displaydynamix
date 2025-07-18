@@ -63,28 +63,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <header className="flex items-center justify-between h-16 px-6 border-b bg-background">
         {/* Logo and Title */}
         <div className="flex items-center gap-0.5">
-          <img
-            src="/images/logo.png"
-            alt="Logo"
+            <img
+              src="/images/logo.png"
+              alt="Logo"
             className="w-16 h-16 object-contain"
-          />
+            />
           <span className="text-2xl font-bold text-primary">Display Dynamix Studio</span>
-        </div>
+          </div>
 
         {/* Navigation Items */}
         <nav className="flex items-center gap-1">
-          {navItems.map((item) => (
+            {navItems.map((item) => (
             <Button
               key={item.href}
               variant={pathname.startsWith(item.href) ? "default" : "ghost"}
               size="sm"
-              onClick={() => router.push(item.href)}
+                  onClick={() => router.push(item.href)}
               className="flex items-center gap-2"
-            >
+                >
               <item.icon className="w-4 h-4" />
-              <span>{item.label}</span>
+                  <span>{item.label}</span>
             </Button>
-          ))}
+            ))}
         </nav>
 
         {/* User Menu */}
@@ -92,15 +92,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="flex items-center gap-2 p-2 h-auto">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src="https://placehold.co/40x40.png" alt={user.username} data-ai-hint="user avatar" />
-                  <AvatarFallback>{user.username.substring(0, 2).toUpperCase()}</AvatarFallback>
-                </Avatar>
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src="https://placehold.co/40x40.png" alt={user.username} data-ai-hint="user avatar" />
+                    <AvatarFallback>{user.username.substring(0, 2).toUpperCase()}</AvatarFallback>
+                  </Avatar>
                 <div className="text-left hidden md:block">
-                  <p className="text-sm font-medium">{user.username}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {user.email}
-                  </p>
+                    <p className="text-sm font-medium">{user.username}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {user.email}
+                    </p>
                 </div>
               </Button>
             </DropdownMenuTrigger>
